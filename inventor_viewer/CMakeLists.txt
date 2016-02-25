@@ -6,7 +6,6 @@ project(inventor_viewer)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   roscpp
-  std_msgs
 )
 
 SET(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/CMakeMacros/")
