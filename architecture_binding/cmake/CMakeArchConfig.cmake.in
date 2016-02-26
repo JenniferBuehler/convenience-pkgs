@@ -1,0 +1,9 @@
+set(USE_BOOST true)
+
+if (USE_BOOST)
+    add_definitions(-DUSE_BOOST)
+else (USE_BOOST)
+    add_definitions(-std=c++11)
+endif (USE_BOOST)
+
+
