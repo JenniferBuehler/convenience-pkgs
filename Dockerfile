@@ -22,11 +22,14 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/
 
 # Install required ROS dependencies
-#RUN apt-get update && apt-get install -y \
-#    && rm -rf /var/lib/apt/lists/
+RUN apt-get update && apt-get install -y \
+    ros-indigo-eigen-conversions \
+    && rm -rf /var/lib/apt/lists/
 
 COPY inventor_viewer /catkin_ws/src/inventor_viewer
 COPY architecture_binding /catkin_ws/src/architecture_binding
+COPY convenience_math_functions /catkin_ws/src/convenience_math_functions
+COPY convenience_ros_functions /catkin_ws/src/convenience_ros_functions
 
 # Build
 RUN bin/bash -c "source /.bashrc \
