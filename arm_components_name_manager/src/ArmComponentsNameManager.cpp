@@ -33,18 +33,18 @@ ArmComponentsNameManager::ArmComponentsNameManager(const ArmComponentsNameManage
     initWithDefaults(o.initWithDefaults)
 {
 }
-    
+
 bool ArmComponentsNameManager::loadDefaults()
 {
     if (!hasDefaults()) return false;
     palm_link = getDefaultPalmLink();
-    arm_joints=getDefaultArmJoints();
+    arm_joints = getDefaultArmJoints();
     arm_links = getDefaultArmLinks();
-    arm_joint_init=getDefaultArmJointsInitPose();
+    arm_joint_init = getDefaultArmJointsInitPose();
     gripper_joints = getDefaultGripperJoints();
     gripper_links = getDefaultGripperLinks();
-    gripper_joint_init=getDefaultGripperJointsInitPose();
-    initWithDefaults=true;
+    gripper_joint_init = getDefaultGripperJointsInitPose();
+    initWithDefaults = true;
     return true;
 }
 
@@ -55,7 +55,7 @@ int ArmComponentsNameManager::loadParameters()
     int numSpecs = 0;
 
     ros::NodeHandle robot_nh(robot_namespace);
-    ROS_INFO_STREAM("ArmComponentsNameManager reading parameters from namespace: "<<robot_nh.getNamespace());
+    ROS_INFO_STREAM("ArmComponentsNameManager reading parameters from namespace: " << robot_nh.getNamespace());
 
     // ROS_INFO_STREAM("Reading palm_link:");
     robot_nh.getParam("palm_link", palm_link);
@@ -65,9 +65,9 @@ int ArmComponentsNameManager::loadParameters()
         ROS_ERROR("Parameter palm_link should be specified");
     }
     ++numSpecs;
-    
+
     // --- arm parameters
-    
+
     // ROS_INFO_STREAM("Reading arm_joints:");
     robot_nh.getParam("arm_joints", arm_joints);
     if (arm_joints.empty())
@@ -87,8 +87,8 @@ int ArmComponentsNameManager::loadParameters()
     }
     ++numSpecs;
     // for (int i=0; i < arm_joint_init.size(); ++i) { ROS_INFO_STREAM("idx " << i << ": " << arm_joint_init[i]);}
- 
-    
+
+
     // ROS_INFO_STREAM("Reading arm_links:");
     robot_nh.getParam("arm_links", arm_links);
     if (arm_links.empty())
@@ -151,7 +151,7 @@ int ArmComponentsNameManager::loadParameters()
     }
     ++numSpecs;
     // for (int i=0; i < gripper_joint_init.size(); ++i) { ROS_INFO_STREAM("idx " << i << ": " << gripper_joint_init[i]);}
- 
+
 
     // ROS_INFO_STREAM("Reading gripper_links:");
     robot_nh.getParam("gripper_links", gripper_links);
@@ -199,7 +199,7 @@ int ArmComponentsNameManager::loadParameters()
     return initParamCode;
 }
 
-    
+
 bool ArmComponentsNameManager::waitToLoadParameters(int sufficientSuccessCode, float maxWait)
 {
     float checkSteps = 0.1;
@@ -210,7 +210,7 @@ bool ArmComponentsNameManager::waitToLoadParameters(int sufficientSuccessCode, f
         if (loadParamRet >= sufficientSuccessCode)
             return true;
         ros::Duration(checkSteps).sleep();
-        timeWaited+=checkSteps;
+        timeWaited += checkSteps;
     }
     return false;
 }
@@ -236,18 +236,18 @@ void ArmComponentsNameManager::ReadPIDValues(const std::string& pidParameterName
 bool ArmComponentsNameManager::GetPosGains(const std::string& jointName, float& kp, float& ki, float& kd) const
 {
     std::vector<std::string>::const_iterator jnt = std::find(arm_joints.begin(), arm_joints.end(), jointName);
-    if (jnt==arm_joints.end())
+    if (jnt == arm_joints.end())
     {
         jnt = std::find(gripper_joints.begin(), gripper_joints.end(), jointName);
-        if (jnt==gripper_joints.end())
+        if (jnt == gripper_joints.end())
         {
-            ROS_ERROR_STREAM("ArmComponentsNameManager does not maintain joint name '"<<jointName<<"'");
+            ROS_ERROR_STREAM("ArmComponentsNameManager does not maintain joint name '" << jointName << "'");
             return false;
         }
         int idx = jnt - gripper_joints.begin();
         if (gripper_position_controller_names.size() <= idx)
         {
-            ROS_ERROR_STREAM("ArmComponentsNameManager does have the name for position controller '"<<jointName<<"'");
+            ROS_ERROR_STREAM("ArmComponentsNameManager does have the name for position controller '" << jointName << "'");
             return false;
         }
         ReadPIDValues(gripper_position_controller_names[idx], kp, ki, kd);
@@ -257,41 +257,29 @@ bool ArmComponentsNameManager::GetPosGains(const std::string& jointName, float& 
         int idx = jnt - arm_joints.begin();
         if (arm_position_controller_names.size() <= idx)
         {
-            ROS_ERROR_STREAM("ArmComponentsNameManager does have the name for position controller '"<<jointName<<"'");
+            ROS_ERROR_STREAM("ArmComponentsNameManager does have the name for position controller '" << jointName << "'");
             return false;
         }
         ReadPIDValues(arm_position_controller_names[idx], kp, ki, kd);
     }
     return true;
-
-    /*if (jointName == arm_joints[0]) ReadPIDValues("arm_0_joint_position_controller", kp, ki, kd);
-    else if (jointName == arm_joints[1]) ReadPIDValues("arm_1_joint_position_controller", kp, ki, kd);
-    else if (jointName == arm_joints[2]) ReadPIDValues("arm_2_joint_position_controller", kp, ki, kd);
-    else if (jointName == arm_joints[3]) ReadPIDValues("arm_3_joint_position_controller", kp, ki, kd);
-    else if (jointName == arm_joints[4]) ReadPIDValues("arm_4_joint_position_controller", kp, ki, kd);
-    else if (jointName == arm_joints[5]) ReadPIDValues("arm_5_joint_position_controller", kp, ki, kd);
-    else if (jointName == gripper_joints[0]) ReadPIDValues("gripper_joint_0_position_controller", kp, ki, kd);
-    else if (jointName == gripper_joints[1]) ReadPIDValues("gripper_joint_2_position_controller", kp, ki, kd);
-    else if (jointName == gripper_joints[2]) ReadPIDValues("gripper_joint_4_position_controller", kp, ki, kd);
-    else return false;
-    return true;*/
 }
 
 bool ArmComponentsNameManager::GetVelGains(const std::string& jointName, float& kp, float& ki, float& kd) const
 {
     std::vector<std::string>::const_iterator jnt = std::find(arm_joints.begin(), arm_joints.end(), jointName);
-    if (jnt==arm_joints.end())
+    if (jnt == arm_joints.end())
     {
         jnt = std::find(gripper_joints.begin(), gripper_joints.end(), jointName);
-        if (jnt==gripper_joints.end())
+        if (jnt == gripper_joints.end())
         {
-            ROS_ERROR_STREAM("ArmComponentsNameManager does not maintain joint name '"<<jointName<<"'");
+            ROS_ERROR_STREAM("ArmComponentsNameManager does not maintain joint name '" << jointName << "'");
             return false;
         }
         int idx = jnt - gripper_joints.begin();
         if (gripper_velocity_controller_names.size() <= idx)
         {
-            ROS_ERROR_STREAM("ArmComponentsNameManager does have the name for velocity controller '"<<jointName<<"'");
+            ROS_ERROR_STREAM("ArmComponentsNameManager does have the name for velocity controller '" << jointName << "'");
             return false;
         }
         ReadPIDValues(gripper_velocity_controller_names[idx], kp, ki, kd);
@@ -301,24 +289,12 @@ bool ArmComponentsNameManager::GetVelGains(const std::string& jointName, float& 
         int idx = jnt - arm_joints.begin();
         if (arm_velocity_controller_names.size() <= idx)
         {
-            ROS_ERROR_STREAM("ArmComponentsNameManager does have the name for velocity controller '"<<jointName<<"'");
+            ROS_ERROR_STREAM("ArmComponentsNameManager does have the name for velocity controller '" << jointName << "'");
             return false;
         }
         ReadPIDValues(arm_velocity_controller_names[idx], kp, ki, kd);
     }
     return true;
-
-/*    if (jointName == arm_joints[0]) ReadPIDValues("arm_0_joint_velocity_controller", kp, ki, kd);
-    else if (jointName == arm_joints[1]) ReadPIDValues("arm_1_joint_velocity_controller", kp, ki, kd);
-    else if (jointName == arm_joints[2]) ReadPIDValues("arm_2_joint_velocity_controller", kp, ki, kd);
-    else if (jointName == arm_joints[3]) ReadPIDValues("arm_3_joint_velocity_controller", kp, ki, kd);
-    else if (jointName == arm_joints[4]) ReadPIDValues("arm_4_joint_velocity_controller", kp, ki, kd);
-    else if (jointName == arm_joints[5]) ReadPIDValues("arm_5_joint_velocity_controller", kp, ki, kd);
-    else if (jointName == gripper_joints[0]) ReadPIDValues("gripper_joint_0_velocity_controller", kp, ki, kd);
-    else if (jointName == gripper_joints[1]) ReadPIDValues("gripper_joint_2_velocity_controller", kp, ki, kd);
-    else if (jointName == gripper_joints[2]) ReadPIDValues("gripper_joint_4_velocity_controller", kp, ki, kd);
-    else return false;
-    return true; */
 }
 
 
@@ -374,8 +350,8 @@ const std::vector<float>& ArmComponentsNameManager::getGripperJointsInitPose() c
 void ArmComponentsNameManager::initJointState(sensor_msgs::JointState& js, bool withGripper, const std::vector<float> * init_poses) const
 {
     getJointNames(js.name, withGripper);
-    int num = 9;
-    if (!withGripper) num = 6;
+    int num = arm_joints.size() + gripper_joints.size();
+    if (!withGripper) num = arm_joints.size();
     js.position.resize(num, 0);
     js.velocity.resize(num, 0);
     js.effort.resize(num, 0);
@@ -490,17 +466,17 @@ double ArmComponentsNameManager::capToPI(const double value)
     return v;
 }
 
-double ArmComponentsNameManager::limitsToTwoPI(const double value, const double lowLimit, const double highLimit) 
+double ArmComponentsNameManager::limitsToTwoPI(const double value, const double lowLimit, const double highLimit)
 {
     double ret = value;
     if (value > highLimit) ret = value - 2*M_PI;
-    if (value < lowLimit) ret = value + 2*M_PI; 
+    if (value < lowLimit) ret = value + 2*M_PI;
     return ret;
 }
 
 
 
-double ArmComponentsNameManager::angleDistance(const double _f1, const double _f2) 
+double ArmComponentsNameManager::angleDistance(const double _f1, const double _f2)
 {
     double f1 = capToPI(_f1);
     double f2 = capToPI(_f2);
@@ -510,7 +486,7 @@ double ArmComponentsNameManager::angleDistance(const double _f1, const double _f
 }
 */
 
-    
+
 int ArmComponentsNameManager::numArmJoints() const
 {
     return arm_joints.size();
@@ -528,11 +504,11 @@ void ArmComponentsNameManager::setValues(const std::string& _palm_link,
         const std::vector<float>& _arm_joint_init, const std::vector<float>& _gripper_joint_init)
 {
     palm_link = _palm_link;
-    arm_joints = _arm_joints; 
+    arm_joints = _arm_joints;
     arm_links = _arm_links;
     gripper_joints = _gripper_joints;
     gripper_links = _gripper_links;
-    arm_joint_init = _arm_joint_init; 
+    arm_joint_init = _arm_joint_init;
     gripper_joint_init = _gripper_joint_init;
 }
 

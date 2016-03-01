@@ -43,24 +43,24 @@ namespace arm_components_name_manager
  * loadParameters().
  * Load the paramters on the ROS parameter server before calling loadParameters(),
  * e.g. as follows from a launch file:
- * 
+ *
  * ```
  *   <arg name="names_config_file" default="$(find <your-package>)/config/<your-config>.yaml"/>
  *   <rosparam command="load" file="$(arg names_config_file)"/>
  * ```
- * 
+ *
  * Parameters have to be specified like in this documented .yaml template:
- * 
+ *
  * ``rosed arm_components_name_manager JointsTemplate.yaml``
  *
  * This class can also be manually initialized with default values which take effect
  * if the ROS parameters are not set. The values may be set manually by setValues() and
  * setControllerNames(); alternatively, a subclass may be derived to provide default values
  * by implementing getDefault* methods. The defaults can then be loaded by loadDefaults().
- * 
+ *
  *
  * **Optional: Access per-joint PID values**
- * 
+ *
  * To use this class to manage PID values (which is optional),
  * you have to specify the *effort_controller_names*,
  * *position_controller_names* and *velocity_controller_names* lists in the yaml file.
@@ -71,9 +71,9 @@ namespace arm_components_name_manager
  * ```
  * <joint_name>_velocity_controller:
  *   type: velocity_controllers/JointVelocityController
- *   joint: <joint_name> 
+ *   joint: <joint_name>
  *   pid: {p: 10, i: 0.0001, d: 0.005}
- * ```                                         
+ * ```
  *
  * In this example, the configuration file (e.g. JointsTemplate.yaml) has to include
  * this:
@@ -82,7 +82,7 @@ namespace arm_components_name_manager
  *    velocity_controller_names:
  *       - <joint_name>_velocity_controller
  * ```
- * 
+ *
  * The names config file (JointsTemplate.yaml) only needs a list of those joint controller names,
  * not the actual PID values. It is assumed that each robot only has *one* velocity, effort or
  * position controller per joint, which is then referred to globally with the same name.
@@ -90,7 +90,7 @@ namespace arm_components_name_manager
  * of this class has already been created.
  * The names in the lists are only needed to look up the right controller values at the
  * time when functions GetPosGains() and GetVelGains() are called to read from the parameter
- * server.    
+ * server.
  * Current limitation: The namespace in the JointsTemplate.yaml config file has to be the same as
  * the namespace used in the PID values PIDConfig.yaml file.
  *
@@ -143,19 +143,25 @@ public:
      * Check if the parameters were loaded.
      * Same return values as loadParameters().
      */
-    int parametersLoaded() { return initParamCode; } 
+    int parametersLoaded()
+    {
+        return initParamCode;
+    }
 
     /**
      * returns true if defaults were successfully loaded with loadDefaults()
      */
-    bool defaultsLoaded() { return initWithDefaults; }
+    bool defaultsLoaded()
+    {
+        return initWithDefaults;
+    }
 
     /**
      * Joint names as to be used in the default order (e.g. for JointState messsages)
      * \param prepend if not empty, this string is going to be prepended to the joint names
      */
     void getJointNames(std::vector<std::string>& joint_names,
-            bool withGripper, const std::string& prepend = std::string()) const;
+                       bool withGripper, const std::string& prepend = std::string()) const;
 
     const std::vector<std::string>& getArmJoints() const;
 
@@ -164,7 +170,7 @@ public:
     const std::vector<float>& getArmJointsInitPose() const;
 
     const std::vector<float>& getGripperJointsInitPose() const;
-    
+
     /**
      * returns all gripper links *excluding* the palm link link
      */
@@ -192,10 +198,10 @@ public:
      * joint positions here. The order has to be standard, as returned by getJointNames().
      */
     void initJointState(sensor_msgs::JointState& js, bool withGripper = true,
-            const std::vector<float> * init_poses = NULL) const;
+                        const std::vector<float> * init_poses = NULL) const;
 
     /**
-     * Helper function to find out the order of joints given in a names vector. 
+     * Helper function to find out the order of joints given in a names vector.
      * Returns in output vector \e idx the indices of arm and/or gripper joints in the \e joint_names vector.
      *
      * \retval -1 error if not all arm or all gripper joints are present in joint_names.
@@ -257,7 +263,7 @@ public:
 
     /**
      * Sets the names fo all joints, links, and initial poses which otherwise would be
-     * specified in the YAML file. 
+     * specified in the YAML file.
      * \param _palm_link name of the palm link. See also description in getPalmLink().
      * \param _arm_joints names of the arm joints *without* the gripper joints.
      * \param _arm_links all links which are in-between (and directly before and after) the arm_joints.
@@ -271,9 +277,9 @@ public:
      *      order as \e _gripper_joints.
      */
     void setValues(const std::string& _palm_link,
-        const std::vector<std::string>& _arm_joints, const std::vector<std::string>& _arm_links,
-        const std::vector<std::string>& _gripper_joints, const std::vector<std::string>& _gripper_links,
-        const std::vector<float>& _arm_joint_init, const std::vector<float>& _gripper_joint_init);
+                   const std::vector<std::string>& _arm_joints, const std::vector<std::string>& _arm_links,
+                   const std::vector<std::string>& _gripper_joints, const std::vector<std::string>& _gripper_links,
+                   const std::vector<float>& _arm_joint_init, const std::vector<float>& _gripper_joint_init);
 
     /**
      * Sets the names of the controllers as they would otherwise be specified in the YAML file.
@@ -282,24 +288,30 @@ public:
      */
     void setControllerNames(const std::vector<std::string>& controller_names, bool forArm, int type);
 
-
-protected:
-    ArmComponentsNameManager();
-   
     /**
-     * return true in subclasses which provides all the defaults 
+     * return true in subclasses which provides all the defaults
      * in the getDefault*() methods.
      */
-    virtual bool hasDefaults() { return false; } 
-    virtual std::string getDefaultPalmLink() const{}
-    virtual std::vector<std::string> getDefaultArmJoints() const{}
-    virtual std::vector<std::string> getDefaultArmLinks() const{}
-    virtual std::vector<float> getDefaultArmJointsInitPose() const{}
-    virtual std::vector<float> getDefaultGripperJointsInitPose() const{}
-    virtual std::vector<std::string> getDefaultGripperJoints() const{}
-    virtual std::vector<std::string> getDefaultGripperLinks() const{}
-   
-    /** 
+    virtual bool hasDefaults()
+    {
+        return false;
+    }
+
+protected:
+
+    virtual std::string getDefaultPalmLink() const {}
+    virtual std::vector<std::string> getDefaultArmJoints() const {}
+    virtual std::vector<std::string> getDefaultArmLinks() const {}
+    virtual std::vector<float> getDefaultArmJointsInitPose() const {}
+    virtual std::vector<float> getDefaultGripperJointsInitPose() const {}
+    virtual std::vector<std::string> getDefaultGripperJoints() const {}
+    virtual std::vector<std::string> getDefaultGripperLinks() const {}
+    
+private:
+
+    ArmComponentsNameManager();
+
+    /**
      * Names of the arm joints *without* the gripper joints.
      * These are the joints which are used to move the arm in
      * pre-grasp state, but which are *not* part of the acutal
@@ -316,7 +328,7 @@ protected:
 
     /**
      * All joints of the "gripper". The gripper is the part of the
-     * arm used to grasp/grip objects. 
+     * arm used to grasp/grip objects.
      * Essentially, they are the "gripper joints".
      */
     std::vector<std::string> gripper_joints;
@@ -346,7 +358,7 @@ protected:
      * order as arm_joints.
      */
     std::vector<float> arm_joint_init;
-    
+
     /**
      * initial ("Home") pose of the gripper joints. Has to be the same
      * order as gripper_joints.
@@ -356,7 +368,7 @@ protected:
     std::vector<std::string> arm_effort_controller_names;
     std::vector<std::string> arm_velocity_controller_names;
     std::vector<std::string> arm_position_controller_names;
-    
+
     std::vector<std::string> gripper_effort_controller_names;
     std::vector<std::string> gripper_velocity_controller_names;
     std::vector<std::string> gripper_position_controller_names;
