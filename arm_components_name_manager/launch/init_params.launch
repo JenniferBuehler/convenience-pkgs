@@ -1,0 +1,7 @@
+<launch>
+    ########################################
+    # Load arm names for ArmComponentsNameManager
+    ########################################
+    <arg name="names_config_file"/>
+    <rosparam command="load" file="$(arg names_config_file)"/>
+</launch>

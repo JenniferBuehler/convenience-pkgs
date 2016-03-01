@@ -19,6 +19,16 @@ double MathFunctions::capToPI(const double value)
     return v;
 }
 
+double MathFunctions::limitsToTwoPI(const double value, const double lowLimit, const double highLimit) 
+{
+    double ret = value;
+    if (value > highLimit) ret = value - 2*M_PI;
+    if (value < lowLimit) ret = value + 2*M_PI; 
+    return ret;
+}
+
+
+
 
 Eigen::Quaterniond MathFunctions::getRotationFromTo(const Eigen::Quaterniond& q1, const Eigen::Quaterniond& q2)
 {

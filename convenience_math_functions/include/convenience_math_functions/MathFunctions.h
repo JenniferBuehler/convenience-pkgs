@@ -41,6 +41,17 @@ public:
     }
 
     /**
+     * Transforms a value between -PI and PI to a value between -2*PI and +2*PI such
+     * that the joint limits are respected. It is assumed all values i have to be between
+     * between lower bound l and higher bound h, and always l <= i <= h.
+     * So e.g. l=-3.9 .. h=0.8 instead of
+     * l=2.38 .. h=0.8. So lowLimit can *always* be smaller than highlimit, and there
+     * never is a jump from PI to -PI or the other way round.
+     */
+    static double limitsToTwoPI(const double value, const double lowLimit, const double highLimit);
+
+
+    /**
      * Returns shortest distace between two angles (in rad), specifically
      * when going from \e _f2 to \e _f1
      */
