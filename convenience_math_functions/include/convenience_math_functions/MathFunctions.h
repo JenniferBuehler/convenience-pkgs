@@ -65,7 +65,11 @@ public:
 
     static Eigen::Quaterniond getRotationFromTo(const Eigen::Quaterniond& q1, const Eigen::Quaterniond& q2);
 
-    bool equalFlt(float first, float second, float tolerance);
+    static bool equalFlt(float first, float second, float tolerance);
+    /**
+     * equalFlt(float, float, float) returns true for all in vector
+     */
+    static bool equalFloats(const std::vector<float>& first, const std::vector<float>& second, float tolerance);
 };
 }
 #endif // CONVENIENCE_MATH_FUNCTIONS_MATHFUNCTIONS_H

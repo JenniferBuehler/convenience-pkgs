@@ -197,8 +197,27 @@ public:
      * \param init_poses (optional) if specified, you can set the target angles of the
      * joint positions here. The order has to be standard, as returned by getJointNames().
      */
-    void initJointState(sensor_msgs::JointState& js, bool withGripper = true,
-                        const std::vector<float> * init_poses = NULL) const;
+//    void initJointState(sensor_msgs::JointState& js, bool withGripper = true,
+//                        const std::vector<float> * init_poses = NULL) const;
+
+    /**
+     * Copy names (and optionally poses) into the JointState \e js.
+     * Joint names as to be used in the default order (e.g. for JointState messsages)
+     * \param mode which names to copy int \js. 0 = all joints (first arm, then gripper joints will be
+     *      inserted in \e angles); 1 = only arm joints; 2 = only gripper joints.
+     * \param init_poses (optional) if specified, you can set the target angles of the
+     * joint positions here. The order has to be according to \e mode.
+     */
+    void copyToJointState(sensor_msgs::JointState& js, int mode, const std::vector<float> * init_poses) const;
+
+
+    /**
+     * Extracts all arm and/or gripper angles in the order used in this manager from a JointState message.
+     * \param mode which data to extract. 0 = all joints (first arm, then gripper joints will be
+     *      inserted in \e angles); 1 = only arm joints; 2 = only gripper joints.
+     * \retval false extraction not successfull because not all data was available in joint state \e js
+     */
+    bool extractFromJointState(const sensor_msgs::JointState& js, int mode, std::vector<float>& angles) const;
 
     /**
      * Helper function to find out the order of joints given in a names vector.
@@ -214,7 +233,7 @@ public:
      *
      * If only one group is present, the indices for the other group in idx are going to be set to -1.
      */
-    int getJointIndices(const std::vector<std::string>& joint_names, std::vector<int>& idx);
+    int getJointIndices(const std::vector<std::string>& joint_names, std::vector<int>& idx) const;
 
     int numArmJoints() const;
     int numGripperJoints() const;
@@ -306,7 +325,7 @@ protected:
     virtual std::vector<float> getDefaultGripperJointsInitPose() const {}
     virtual std::vector<std::string> getDefaultGripperJoints() const {}
     virtual std::vector<std::string> getDefaultGripperLinks() const {}
-    
+
 private:
 
     ArmComponentsNameManager();

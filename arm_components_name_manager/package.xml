@@ -41,9 +41,13 @@
   <!--   <test_depend>gtest</test_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>roscpp</build_depend>
+  <build_depend>sensor_msgs</build_depend>
   <build_depend>convenience_math_functions</build_depend>
+  <build_depend>architecture_binding</build_depend>
   <run_depend>roscpp</run_depend>
+  <run_depend>sensor_msgs</run_depend>
   <run_depend>convenience_math_functions</run_depend>
+  <run_depend>architecture_binding</run_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

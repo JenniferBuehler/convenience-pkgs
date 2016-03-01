@@ -1,3 +1,26 @@
+#ifdef DOXYGEN_SHOULD_SKIP_THIS
+/**
+   Manages information about the for a robotic "arm" as defined in the URDF file.
+
+   Copyright (C) 2015 Jennifer Buehler
+
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software Foundation,
+   Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+*/
+#endif
+
+
 #include <arm_components_name_manager/ArmComponentsNameManager.h>
 #include <map>
 #include <string>
@@ -209,6 +232,7 @@ bool ArmComponentsNameManager::waitToLoadParameters(int sufficientSuccessCode, f
         int loadParamRet = loadParameters();
         if (loadParamRet >= sufficientSuccessCode)
             return true;
+        ROS_INFO("ArmComponentsNameManager: wait for ROS parameters to be loaded....");
         ros::Duration(checkSteps).sleep();
         timeWaited += checkSteps;
     }
@@ -347,7 +371,8 @@ const std::vector<float>& ArmComponentsNameManager::getGripperJointsInitPose() c
     return gripper_joint_init;
 }
 
-void ArmComponentsNameManager::initJointState(sensor_msgs::JointState& js, bool withGripper, const std::vector<float> * init_poses) const
+
+/*void ArmComponentsNameManager::initJointState(sensor_msgs::JointState& js, bool withGripper, const std::vector<float> * init_poses) const
 {
     getJointNames(js.name, withGripper);
     int num = arm_joints.size() + gripper_joints.size();
@@ -362,63 +387,119 @@ void ArmComponentsNameManager::initJointState(sensor_msgs::JointState& js, bool 
             js.position[i] = (*init_poses)[i];
         }
     }
+}*/
+
+
+void ArmComponentsNameManager::copyToJointState(sensor_msgs::JointState& js, int mode, const std::vector<float> * init_poses) const
+{
+    // 0 = all joints; 1 = only arm joints; 2 = only gripper joints.
+    int size = -1;
+    if (mode == 0)
+    {
+        size = arm_joints.size() + gripper_joints.size();
+        getJointNames(js.name, true);
+    }
+    else if (mode == 1)
+    {
+        size = arm_joints.size();
+        js.name = arm_joints;
+    }
+    else if (mode == 2)
+    {
+        size = gripper_joints.size();
+        js.name = gripper_joints;
+    }
+
+    js.position.resize(size, 0);
+    js.velocity.resize(size, 0);
+    js.effort.resize(size, 0);
+    if (init_poses)
+    {
+        for (int i = 0; i < size; ++i)
+        {
+            js.position[i] = (*init_poses)[i];
+        }
+    }
 }
 
 
-int ArmComponentsNameManager::getJointIndices(const std::vector<std::string>& joint_names, std::vector<int>& idx)
+
+bool ArmComponentsNameManager::extractFromJointState(const sensor_msgs::JointState& js, int mode, std::vector<float>& angles) const
+{
+	std::vector<int> joint_indices;
+	int idx = getJointIndices(js.name,joint_indices);
+    if (idx != mode) return false;
+
+    angles.clear();
+    for (int i=0; i< joint_indices.size(); ++i)
+    {
+        if (js.position.size() >= joint_indices[i])
+        {
+            ROS_ERROR("Consistency: JointState position vector was not of same size as names");
+            return false;
+        }
+        angles.push_back(js.position[joint_indices[i]]);
+    }
+    return true; 
+}
+
+
+int ArmComponentsNameManager::getJointIndices(const std::vector<std::string>& joint_names, std::vector<int>& idx) const
 {
     typedef std::vector<std::string>::const_iterator It;
 
-    It jnt1 = std::find(joint_names.begin(), joint_names.end(), arm_joints[0]);
-    It jnt2 = std::find(joint_names.begin(), joint_names.end(), arm_joints[1]);
-    It jnt3 = std::find(joint_names.begin(), joint_names.end(), arm_joints[2]);
-    It jnt4 = std::find(joint_names.begin(), joint_names.end(), arm_joints[3]);
-    It jnt5 = std::find(joint_names.begin(), joint_names.end(), arm_joints[4]);
-    It jnt6 = std::find(joint_names.begin(), joint_names.end(), arm_joints[5]);
-    It fjnt1 = std::find(joint_names.begin(), joint_names.end(), gripper_joints[0]);
-    It fjnt2 = std::find(joint_names.begin(), joint_names.end(), gripper_joints[1]);
-    It fjnt3 = std::find(joint_names.begin(), joint_names.end(), gripper_joints[2]);
-
-    bool armIncomplete = (jnt1 == joint_names.end()) ||
-                         (jnt2 == joint_names.end()) ||
-                         (jnt3 == joint_names.end()) ||
-                         (jnt4 == joint_names.end()) ||
-                         (jnt5 == joint_names.end()) ||
-                         (jnt6 == joint_names.end());
-    bool grippersIncomplete = (fjnt1 == joint_names.end()) || (fjnt2 == joint_names.end()) || (fjnt3 == joint_names.end());
+    bool armIncomplete = false;
+    std::vector<int> arm_idx;
+    for (int i=0; i < arm_joints.size(); ++i)
+    {
+        It jnt = std::find(joint_names.begin(), joint_names.end(), arm_joints[i]);
+        if (jnt == joint_names.end())
+        {
+            armIncomplete = true;
+            break;
+        }
+        arm_idx.push_back(jnt - joint_names.begin());
+    }
+    
+    bool grippersIncomplete = false;
+    std::vector<int> gripper_idx;
+    for (int i=0; i < gripper_joints.size(); ++i)
+    {
+        It jnt = std::find(joint_names.begin(), joint_names.end(), gripper_joints[i]);
+        if (jnt == joint_names.end())
+        {
+            grippersIncomplete = true;
+            break;
+        }
+        gripper_idx.push_back(jnt - joint_names.begin());
+    }
 
     if (armIncomplete && grippersIncomplete)
     {
-        // ROS_INFO("ArmComponentsNameManager::getJointIndices: Not all joint names present in trajectory. List:");
+        // ROS_INFO("ArmComponentsNameManager::getJointIndices: Not all joint names present. List:");
         // for (std::vector<std::string>::const_iterator it=joint_names.begin(); it!=joint_names.end(); ++it) ROS_INFO("%s",it->c_str());
         return -1;
     }
     if (!armIncomplete)
     {
-        idx.push_back(jnt1 - joint_names.begin());
-        idx.push_back(jnt2 - joint_names.begin());
-        idx.push_back(jnt3 - joint_names.begin());
-        idx.push_back(jnt4 - joint_names.begin());
-        idx.push_back(jnt5 - joint_names.begin());
-        idx.push_back(jnt6 - joint_names.begin());
+        idx.insert(idx.begin(), arm_idx.begin(), arm_idx.end());
     }
     else
     {
-        idx.insert(idx.end(), 6, -1);
+        idx.insert(idx.end(), arm_joints.size(), -1);
     }
     if (!grippersIncomplete)
     {
-        idx.push_back(fjnt1 - joint_names.begin());
-        idx.push_back(fjnt2 - joint_names.begin());
-        idx.push_back(fjnt3 - joint_names.begin());
+        idx.insert(idx.begin(), gripper_idx.begin(), gripper_idx.end());
     }
     else
     {
-        idx.insert(idx.end(), 3, -1);
+        idx.insert(idx.end(), gripper_joints.size(), -1);
     }
 
     return grippersIncomplete ? 1 : armIncomplete ? 2 : 0;
 }
+
 
 bool ArmComponentsNameManager::isGripper(const std::string& name) const
 {
@@ -449,43 +530,6 @@ int ArmComponentsNameManager::gripperJointNumber(const std::string& name) const
     }
     return -1;
 }
-
-/*
-double ArmComponentsNameManager::capToPI(const double value)
-{
-    static const double pi_2 = 2.0 * M_PI;
-    double v = value;
-    if (v <= -M_PI || v > M_PI)
-    {
-        v = fmod(v, pi_2);
-        if (v <= -M_PI)
-            v += pi_2;
-        else if (v > M_PI)
-            v -= pi_2;
-    }
-    return v;
-}
-
-double ArmComponentsNameManager::limitsToTwoPI(const double value, const double lowLimit, const double highLimit)
-{
-    double ret = value;
-    if (value > highLimit) ret = value - 2*M_PI;
-    if (value < lowLimit) ret = value + 2*M_PI;
-    return ret;
-}
-
-
-
-double ArmComponentsNameManager::angleDistance(const double _f1, const double _f2)
-{
-    double f1 = capToPI(_f1);
-    double f2 = capToPI(_f2);
-    double diff = f2 - f1;
-    diff = capToPI(diff);
-    return diff;
-}
-*/
-
 
 int ArmComponentsNameManager::numArmJoints() const
 {

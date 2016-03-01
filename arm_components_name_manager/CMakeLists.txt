@@ -6,7 +6,9 @@ project(arm_components_name_manager)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   roscpp
+  sensor_msgs
   convenience_math_functions
+  architecture_binding 
 )
 
 ## System dependencies are found with CMake's conventions
@@ -48,10 +50,10 @@ find_package(catkin REQUIRED COMPONENTS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  INCLUDE_DIRS include
- LIBRARIES arm_components_name_manager
- CATKIN_DEPENDS roscpp convenience_math_functions
-#  DEPENDS system_lib
+    INCLUDE_DIRS include
+    LIBRARIES arm_components_name_manager
+    CATKIN_DEPENDS roscpp sensor_msgs convenience_math_functions architecture_binding
+#   DEPENDS system_lib
 )
 
 ###########
@@ -68,6 +70,7 @@ include_directories(
 ## Declare a C++ library
 add_library(arm_components_name_manager
   src/ArmComponentsNameManager.cpp
+  src/ArmJointStateSubscriber.cpp
 )
 
 ## Add cmake target dependencies of the library
