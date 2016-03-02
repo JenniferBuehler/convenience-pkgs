@@ -38,7 +38,7 @@ namespace arm_components_name_manager
 
 /**
  * Helper class which subscribes to sensor_msgs::JointState topic to maintain up-to-date
- * state of the arm. 
+ * state of the arm.
  * It does the updates only when active, which can be triggered with setActive(true).
  *
  * \author Jennifer Buehler

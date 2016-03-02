@@ -24,7 +24,7 @@
 #include <ros/ros.h>
 #include <string>
 
-namespace architecture_binding 
+namespace architecture_binding
 {
 
 /**

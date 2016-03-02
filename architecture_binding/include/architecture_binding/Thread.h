@@ -35,7 +35,7 @@
 
 
 
-namespace architecture_binding 
+namespace architecture_binding
 {
 
 #ifdef USE_BOOST
@@ -45,17 +45,17 @@ typedef boost::mutex mutex;
 typedef boost::recursive_mutex recursive_mutex;
 
 /*template <class T>
-class unique_lock: public boost::unique_lock<T> 
+class unique_lock: public boost::unique_lock<T>
 { };
 
 template <class T>
-class unique_recursive_lock: public boost::unique_recursive_lock<T> 
+class unique_recursive_lock: public boost::unique_recursive_lock<T>
 { };*/
 
 // make typedefs of this as follows:
 // typedef architecture_binding::unique_lock<CLASS>::type CLASSPtr;
 template <class T>
-struct unique_lock 
+struct unique_lock
 {
     typedef boost::unique_lock<T> type;
 };
@@ -71,18 +71,18 @@ typedef std::mutex mutex;
 typedef std::recursive_mutex recursive_mutex;
 
 /*template <class T>
-class unique_lock: public std::unique_lock<T> 
+class unique_lock: public std::unique_lock<T>
 { };
 
 template <class T>
-class unique_recursive_lock: public std::unique_recursive_lock<T> 
+class unique_recursive_lock: public std::unique_recursive_lock<T>
 { };*/
 
 
 // make typedefs of this as follows:
 // typedef architecture_binding::unique_lock<CLASS>::type CLASSPtr;
 template <class T>
-struct unique_lock 
+struct unique_lock
 {
     typedef std::unique_lock<T> type;
 };

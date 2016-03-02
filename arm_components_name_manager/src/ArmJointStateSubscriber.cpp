@@ -63,7 +63,7 @@ std::string ArmJointStateSubscriber::toString() const
     for (int i = 0; i < gripper_angles.size(); ++i) str << gripper_angles[i] << " / ";
     return str.str();
 }
-    
+
 
 void ArmJointStateSubscriber::callback(const sensor_msgs::JointState& msg)
 {

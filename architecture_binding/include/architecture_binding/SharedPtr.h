@@ -33,19 +33,19 @@
 
 
 
-namespace architecture_binding 
+namespace architecture_binding
 {
 
 #ifdef USE_BOOST
 
 /*template <class T>
-class shared_ptr: public boost::shared_ptr<T> 
+class shared_ptr: public boost::shared_ptr<T>
 { };*/
 
 // make typedefs of this as follows:
 // typedef architecture_binding::shared_ptr<CLASS>::type CLASSPtr;
 template <class T>
-struct shared_ptr 
+struct shared_ptr
 {
     typedef boost::shared_ptr<T> type;
 };
@@ -53,13 +53,13 @@ struct shared_ptr
 #else  // use C++11 std
 
 /*template <class T>
-class shared_ptr: public std::shared_ptr<T> 
+class shared_ptr: public std::shared_ptr<T>
 { };*/
 
 // make typedefs of this as follows:
 // typedef architecture_binding::shared_ptr<CLASS>::type CLASSPtr;
 template <class T>
-struct shared_ptr 
+struct shared_ptr
 {
     typedef std::shared_ptr<T> type;
 };

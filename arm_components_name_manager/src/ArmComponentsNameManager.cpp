@@ -426,12 +426,12 @@ void ArmComponentsNameManager::copyToJointState(sensor_msgs::JointState& js, int
 
 bool ArmComponentsNameManager::extractFromJointState(const sensor_msgs::JointState& js, int mode, std::vector<float>& angles) const
 {
-	std::vector<int> joint_indices;
-	int idx = getJointIndices(js.name,joint_indices);
+    std::vector<int> joint_indices;
+    int idx = getJointIndices(js.name, joint_indices);
     if (idx != mode) return false;
 
     angles.clear();
-    for (int i=0; i< joint_indices.size(); ++i)
+    for (int i = 0; i < joint_indices.size(); ++i)
     {
         if (js.position.size() >= joint_indices[i])
         {
@@ -440,17 +440,18 @@ bool ArmComponentsNameManager::extractFromJointState(const sensor_msgs::JointSta
         }
         angles.push_back(js.position[joint_indices[i]]);
     }
-    return true; 
+    return true;
 }
 
 
 int ArmComponentsNameManager::getJointIndices(const std::vector<std::string>& joint_names, std::vector<int>& idx) const
 {
     typedef std::vector<std::string>::const_iterator It;
+    idx.clear();
 
     bool armIncomplete = false;
     std::vector<int> arm_idx;
-    for (int i=0; i < arm_joints.size(); ++i)
+    for (int i = 0; i < arm_joints.size(); ++i)
     {
         It jnt = std::find(joint_names.begin(), joint_names.end(), arm_joints[i]);
         if (jnt == joint_names.end())
@@ -460,10 +461,10 @@ int ArmComponentsNameManager::getJointIndices(const std::vector<std::string>& jo
         }
         arm_idx.push_back(jnt - joint_names.begin());
     }
-    
+
     bool grippersIncomplete = false;
     std::vector<int> gripper_idx;
-    for (int i=0; i < gripper_joints.size(); ++i)
+    for (int i = 0; i < gripper_joints.size(); ++i)
     {
         It jnt = std::find(joint_names.begin(), joint_names.end(), gripper_joints[i]);
         if (jnt == joint_names.end())
@@ -482,7 +483,7 @@ int ArmComponentsNameManager::getJointIndices(const std::vector<std::string>& jo
     }
     if (!armIncomplete)
     {
-        idx.insert(idx.begin(), arm_idx.begin(), arm_idx.end());
+        idx.insert(idx.end(), arm_idx.begin(), arm_idx.end());
     }
     else
     {
@@ -490,7 +491,7 @@ int ArmComponentsNameManager::getJointIndices(const std::vector<std::string>& jo
     }
     if (!grippersIncomplete)
     {
-        idx.insert(idx.begin(), gripper_idx.begin(), gripper_idx.end());
+        idx.insert(idx.end(), gripper_idx.begin(), gripper_idx.end());
     }
     else
     {
