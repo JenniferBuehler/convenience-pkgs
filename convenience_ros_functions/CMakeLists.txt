@@ -17,14 +17,7 @@ find_package(catkin REQUIRED COMPONENTS
   architecture_binding
 )
 
-## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
-
-
-## Uncomment this if the package has a setup.py. This macro ensures
-## modules and global scripts declared therein get installed
-## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
-# catkin_python_setup()
+include(cmake/architecture_binding.cmake.in)
 
 ###################################
 ## catkin specific configuration ##
@@ -41,6 +34,7 @@ catkin_package(
   CATKIN_DEPENDS actionlib geometry_msgs rosbag roscpp sensor_msgs
         tf trajectory_msgs eigen_conversions convenience_math_functions architecture_binding
 #  DEPENDS system_lib
+   CFG_EXTRAS architecture_binding.cmake.in
 )
 
 ###########
@@ -91,18 +85,18 @@ target_link_libraries(convenience_ros_functions
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS convenience_ros_functions convenience_ros_functions_node
-#   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
+install(TARGETS convenience_ros_functions
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 ## Mark cpp header files for installation
-# install(DIRECTORY include/${PROJECT_NAME}/
-#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-#   FILES_MATCHING PATTERN "*.h"
-#   PATTERN ".svn" EXCLUDE
-# )
+install(DIRECTORY include/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  FILES_MATCHING PATTERN "*.h"
+  PATTERN ".git" EXCLUDE
+)
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
 # install(FILES

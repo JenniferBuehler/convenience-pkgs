@@ -57,19 +57,43 @@ public:
         return o;
     }
 
+    /**
+     * Activates or deactivates the processing of incoming messages.
+     * This can be used to save a bit of processing time when updates
+     * are currently not required.
+     */
     void setActive(bool flag);
+
+    /**
+     * Waits for the next JointState message to arrive.
+     * Only succeeds if active (isActive() returns true)
+     * \param timeout the timeout, or negative if no timeout to be used
+     * \param checkStepTime time (in seconds) to sleep in-between checks wheter
+     *      a new joint state has arrived.
+     * \return true if successfully waited until next message or false
+     *      if timeout reached (or isActive() returned false)
+     */
+    bool waitForUpdate(float timeout=-1, float checkStepTime=0.1) const;
 
     std::vector<float> armAngles(bool& valid) const;
 
     std::vector<float> gripperAngles(bool& valid) const;
 
     std::string toString() const;
+
+    /**
+     * \return true if subscriber is active. See also setActive(bool).
+     */
+    bool isActive() const;
 private:
-    typedef architecture_binding::unique_lock<architecture_binding::mutex>::type unique_lock;
+    typedef architecture_binding::unique_lock<architecture_binding::recursive_mutex>::type unique_lock;
 
     void callback(const sensor_msgs::JointState& msg);
 
-    mutable architecture_binding::mutex mutex;
+    ros::Time getLastUpdateTime() const;
+
+    // protects all fields which need protecting
+    mutable architecture_binding::recursive_mutex mutex;
     bool valid_arm, valid_grippers;
 
     const ArmComponentsNameManager jointsManager;
@@ -78,9 +102,9 @@ private:
     std::vector<float> gripper_angles;
 
     ros::NodeHandle node;
-    ros::Subscriber js;
-
-    bool isActive;
+    ros::Subscriber subscriber;
+    bool subscriberActive;
+    ros::Time last_update_time;
 };
 }  // namespace
 #endif  // ARM_COMPONENTS_NAME_MANAGER_ARMJOINTSTATESUBSCRIBER_H

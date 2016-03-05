@@ -29,6 +29,7 @@
 #else  // use c++11 std
 
 #include <thread>
+#include <mutex>
 #include <chrono>
 
 #endif
@@ -60,11 +61,13 @@ struct unique_lock
     typedef boost::unique_lock<T> type;
 };
 
-
-
 #define SLEEP(secs) { boost::this_thread::sleep(boost::posix_time::milliseconds(secs*1000)); }
 
+
+// ----------------------------------------------
 #else  // use c++11 std
+// ----------------------------------------------
+
 
 typedef std::thread thread;
 typedef std::mutex mutex;
@@ -86,7 +89,6 @@ struct unique_lock
 {
     typedef std::unique_lock<T> type;
 };
-
 
 #define SLEEP(secs) \
 { \

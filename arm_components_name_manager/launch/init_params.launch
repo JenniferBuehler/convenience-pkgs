@@ -1,7 +1,10 @@
 <launch>
-    ########################################
+    ##############################################
     # Load arm names for ArmComponentsNameManager
-    ########################################
+    # The configuration file has to follow the 
+    # format as documented in 
+    # $(find arm_components_name_manager)/config/JointsTemplate.yaml
+    #############################################
     <arg name="names_config_file"/>
     <rosparam command="load" file="$(arg names_config_file)"/>
 </launch>

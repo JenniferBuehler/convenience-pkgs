@@ -119,7 +119,7 @@ public:
      * \retval 1 All mandatory parameters found on parameter server and loaded.
      * \retval 2 All mandatory parameters AND controller names found on parameter server and loaded.
      */
-    int loadParameters();
+    int loadParameters(bool printErrors=true);
 
     /**
      * wait for maximum \e maxWait seconds and keep re-trying to laod parameters by
@@ -127,10 +127,11 @@ public:
      * values greater than \e sufficientSuccessCode.
      * \param sufficientSuccessCode return value of loadParameters() which is considered
      *      a success and can stop the waiting.
+     * \param waitStep the amount of seconds to sleep in-between re-checking for parameters
      * \return true if parameters loaded successfully according to \e sufficientSuccessCode,
      *      false if maximum wait time exceeded.
      */
-    bool waitToLoadParameters(int sufficientSuccessCode, float maxWait);
+    bool waitToLoadParameters(int sufficientSuccessCode, float maxWait, float waitStep=0.1);
 
     /**
      * Loads default values as given by the implementation. Controller names have no defaults

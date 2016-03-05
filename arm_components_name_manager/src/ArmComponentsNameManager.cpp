@@ -71,7 +71,7 @@ bool ArmComponentsNameManager::loadDefaults()
     return true;
 }
 
-int ArmComponentsNameManager::loadParameters()
+int ArmComponentsNameManager::loadParameters(bool printErrors)
 {
     bool allControllersSpecified = true;
     int noSpec = 0;
@@ -85,7 +85,7 @@ int ArmComponentsNameManager::loadParameters()
     if (palm_link.empty())
     {
         ++noSpec;
-        ROS_ERROR("Parameter palm_link should be specified");
+        if (printErrors) ROS_ERROR("Parameter palm_link should be specified");
     }
     ++numSpecs;
 
@@ -96,7 +96,7 @@ int ArmComponentsNameManager::loadParameters()
     if (arm_joints.empty())
     {
         ++noSpec;
-        ROS_ERROR("Parameter arm_joints should be specified as an array");
+        if (printErrors) ROS_ERROR("Parameter arm_joints should be specified as an array");
     }
     ++numSpecs;
     // for (int i=0; i < arm_joints.size(); ++i) { ROS_INFO_STREAM("idx " << i << ": " << arm_joints[i]);}
@@ -106,7 +106,7 @@ int ArmComponentsNameManager::loadParameters()
     if (arm_joint_init.empty())
     {
         ++noSpec;
-        ROS_ERROR("Parameter arm_joint_init should be specified as an array");
+        if (printErrors) ROS_ERROR("Parameter arm_joint_init should be specified as an array");
     }
     ++numSpecs;
     // for (int i=0; i < arm_joint_init.size(); ++i) { ROS_INFO_STREAM("idx " << i << ": " << arm_joint_init[i]);}
@@ -117,7 +117,7 @@ int ArmComponentsNameManager::loadParameters()
     if (arm_links.empty())
     {
         ++noSpec;
-        ROS_ERROR("Parameter arm_links should be specified as an array");
+        if (printErrors) ROS_ERROR("Parameter arm_links should be specified as an array");
     }
     ++numSpecs;
     // for (int i=0; i < arm_links.size(); ++i) { ROS_INFO_STREAM("idx " << i << ": " << arm_links[i]);}
@@ -160,7 +160,7 @@ int ArmComponentsNameManager::loadParameters()
     if (gripper_joints.empty())
     {
         ++noSpec;
-        ROS_ERROR("Parameter gripper_joints should be specified as an array");
+        if (printErrors) ROS_ERROR("Parameter gripper_joints should be specified as an array");
     }
     ++numSpecs;
     // for (int i=0; i < gripper_joints.size(); ++i) { ROS_INFO_STREAM("idx " << i << ": " << gripper_joints[i]);}
@@ -170,7 +170,7 @@ int ArmComponentsNameManager::loadParameters()
     if (gripper_joint_init.empty())
     {
         ++noSpec;
-        ROS_ERROR("Parameter gripper_joint_init should be specified as an array");
+        if (printErrors) ROS_ERROR("Parameter gripper_joint_init should be specified as an array");
     }
     ++numSpecs;
     // for (int i=0; i < gripper_joint_init.size(); ++i) { ROS_INFO_STREAM("idx " << i << ": " << gripper_joint_init[i]);}
@@ -181,7 +181,7 @@ int ArmComponentsNameManager::loadParameters()
     if (gripper_links.empty())
     {
         ++noSpec;
-        ROS_ERROR("Parameter gripper_links should be specified as an array");
+        if (printErrors) ROS_ERROR("Parameter gripper_links should be specified as an array");
     }
     ++numSpecs;
     // for (int i=0; i < gripper_links.size(); ++i) { ROS_INFO_STREAM("idx " << i << ": " << gripper_links[i]);}
@@ -223,18 +223,17 @@ int ArmComponentsNameManager::loadParameters()
 }
 
 
-bool ArmComponentsNameManager::waitToLoadParameters(int sufficientSuccessCode, float maxWait)
+bool ArmComponentsNameManager::waitToLoadParameters(int sufficientSuccessCode, float maxWait, float waitStep)
 {
-    float checkSteps = 0.1;
     float timeWaited = 0;
     while (timeWaited < maxWait)
     {
-        int loadParamRet = loadParameters();
+        int loadParamRet = loadParameters(false);
         if (loadParamRet >= sufficientSuccessCode)
             return true;
         ROS_INFO("ArmComponentsNameManager: wait for ROS parameters to be loaded....");
-        ros::Duration(checkSteps).sleep();
-        timeWaited += checkSteps;
+        ros::Duration(waitStep).sleep();
+        timeWaited += waitStep;
     }
     return false;
 }
@@ -422,20 +421,66 @@ void ArmComponentsNameManager::copyToJointState(sensor_msgs::JointState& js, int
     }
 }
 
-
-
 bool ArmComponentsNameManager::extractFromJointState(const sensor_msgs::JointState& js, int mode, std::vector<float>& angles) const
 {
+    if ((mode < 0) || mode > 2)
+    {
+        ROS_ERROR("Consistency: mode has to be in the range 0..2");
+        return false;
+    }
+
     std::vector<int> joint_indices;
     int idx = getJointIndices(js.name, joint_indices);
-    if (idx != mode) return false;
+    if (idx < 0)
+    {
+        ROS_ERROR("Could not obtain indices of the arm joints in joint state");
+        return false;
+    }
+
+    if ((idx != 0) && (idx != mode))
+    {   // joint states does not contain all joints, and
+        // it does not contain either arm or gripper
+        ROS_ERROR_STREAM("Joint state does not contain the information requested with mode "
+            << mode <<" (return code was " << idx << ")");
+        return false;
+    }
+
+    if (joint_indices.size() != (arm_joints.size() + gripper_joints.size()))
+    {
+        ROS_ERROR("Inconsistency: joint_indices should be same size as all arm joints");
+        return false;
+    }   
+ 
+    int startIt = 0;
+    int endIt = arm_joints.size() + gripper_joints.size();
+    // all joints in joint state, but only sub-state desired
+    if (mode == 1)  // get arm
+    {
+        startIt = 0;
+        endIt = arm_joints.size();
+    } else {  // get gripper
+        startIt = arm_joints.size(); 
+        endIt = startIt + gripper_joints.size();
+    }
 
     angles.clear();
-    for (int i = 0; i < joint_indices.size(); ++i)
+    for (int i = startIt; i < endIt; ++i)
     {
-        if (js.position.size() >= joint_indices[i])
+        if (joint_indices[i] < 0)
         {
-            ROS_ERROR("Consistency: JointState position vector was not of same size as names");
+            ROS_ERROR_STREAM("Joint " << i << " was not in joint state");
+            return false;
+        }
+        if (i >= joint_indices.size())
+        {
+            ROS_ERROR_STREAM("Inconsistency: joint indices are not of expected size: is "
+                <<joint_indices.size()<<", trying to index "<<i);
+            return false;
+        }
+        if (js.position.size() <= joint_indices[i])
+        {
+            ROS_ERROR_STREAM("Inconsistency: JointState position vector was not of same size as names: "
+                <<js.position.size()<<" idx="<<joint_indices[i] << " i = "<<i);
             return false;
         }
         angles.push_back(js.position[joint_indices[i]]);

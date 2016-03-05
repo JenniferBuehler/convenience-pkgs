@@ -1,19 +1,43 @@
-cmake_minimum_required(VERSION 2.8.3)
+# This cmake file compiles two versions of a library to 
+# bind a standard interface to either C++11 or boost 
+# threads and shared pointers. It also includes a 
+# library to use a Logger, either using std::cout
+# or any other implementation, which also can be
+# used either with boost or std c++11.
+#
+# When using the headers, to use Boost define
+# -DUSE_BOOST as compile flag and if you want
+# to use the logger, additionally link the library
+# architecture_binding_log_boost.
+# To use c++11 instead, use compile flag -std=c++11
+# and link the library architecture_binding_log_c++11
+# for the logger. Default options can be enabled
+# by including CMakeArchConfig.cmake.in, which is
+# installed in the share/ destination.
+#
+# The libraries can be compiled with or without
+# C++/Boost support by setting the COMPILE_BOOST
+# and COMPILE_C++11 flags.
+
+cmake_minimum_required(VERSION 2.8.11)
 project(architecture_binding)
 
-# in this CMake file, you should set the switches
-# for the choice of architecture (boost or std)
-# made for compiling the libraries.
-# This CMake file should be included
-# by all other projects which depend on this library.
-set (ARCH_CONFIG_CMAKE CMakeArchConfig.cmake.in)
+# to disable compilation of the boost library,
+# set this to false
+if (NOT COMPILE_BOOST)
+    set(COMPILE_BOOST true)
+endif (NOT COMPILE_BOOST)
 
-include(cmake/CMakeArchConfig.cmake.in)
-
-if (USE_BOOST)
+# to disable compilation of the c++11 library,
+# set this to false
+if (NOT COMPILE_C++11)
+    set(COMPILE_C++11 true)
+endif (NOT COMPILE_C++11)
+   
+if (COMPILE_BOOST)
     ## System dependencies are found with CMake's conventions
     find_package(Boost REQUIRED COMPONENTS filesystem system thread program_options)
-endif (USE_BOOST)
+endif (COMPILE_BOOST)
 
 # catkin is optional, and only to be used when added 
 # as ROS package and compiling with catkin_make. 
@@ -32,6 +56,12 @@ else (CATKIN_DEVEL_PREFIX)
     message("Building architecture_binding without catkin.")
 endif (CATKIN_DEVEL_PREFIX) 
 
+# This CMake file specifies the default options
+# to use along with compiler directives required.
+# It can be included
+# by all other projects which depend on this library.
+set (ARCH_CONFIG_CMAKE CMakeArchConfig.cmake.in)
+include(cmake/CMakeArchConfig.cmake.in)
 
 ###################################
 ## catkin specific configuration ##
@@ -43,12 +73,16 @@ endif (CATKIN_DEVEL_PREFIX)
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 if (catkin_FOUND)
-    if (USE_BOOST)
+    if (COMPILE_BOOST)
         set(CATKIN_DEPEND_LIBS ${Boost_LIBRARIES})
-    endif (USE_BOOST)
+        set(CATKIN_GEN_LIBS architecture_binding_log_boost)
+    endif (COMPILE_BOOST)
+    if (COMPILE_C++11)
+        set(CATKIN_GEN_LIBS ${CATKIN_GEN_LIBS} architecture_binding_log_c++11)
+    endif (COMPILE_C++11)
     catkin_package(
         INCLUDE_DIRS include
-        LIBRARIES architecture_binding_log
+        LIBRARIES ${CATKIN_GEN_LIBS} 
         CATKIN_DEPENDS roscpp
         DEPENDS ${CATKIN_DEPEND_LIBS}
         CFG_EXTRAS ${ARCH_CONFIG_CMAKE}
@@ -59,28 +93,53 @@ endif (catkin_FOUND)
 ## Build ##
 ###########
 
-
-
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
   include
-  ${Boost_INCLUDE_DIRS}
-  ${catkin_INCLUDE_DIRS}
+  ${Boost_INCLUDE_DIRS} # will be empty anyway if not using boost
+  ${catkin_INCLUDE_DIRS} # will be empty anyway if not compiling with catkin
 )
 
 set(LOG_LIBRARY_SOURCES
     src/LogBinding.cpp
 )
 
-## Declare a C++ library
-add_library(architecture_binding_log
-    ${LOG_LIBRARY_SOURCES}
-)
+if (COMPILE_BOOST)
+    add_library(architecture_binding_log_boost
+        ${LOG_LIBRARY_SOURCES}
+    )
+endif (COMPILE_BOOST)
+    
+if (COMPILE_C++11)
+    add_library(architecture_binding_log_c++11
+        ${LOG_LIBRARY_SOURCES}
+    )
+endif (COMPILE_C++11)
+
+if ((CMAKE_VERSION VERSION_GREATER 2.8.12) OR (CMAKE_VERSION VERSION_EQUAL 2.8.12))
+    message("Using target_compile_options with cmake version ${CMAKE_VERSION}")
+    target_compile_options(architecture_binding_log_boost PRIVATE -DUSE_BOOST) 
+    target_compile_options(architecture_binding_log_c++11 PRIVATE -std=c++11) 
+else ((CMAKE_VERSION VERSION_GREATER 2.8.12) OR (CMAKE_VERSION VERSION_EQUAL 2.8.12))
+    message("Using set_target_properties with cmake version ${CMAKE_VERSION}")
+    # not recommended, but works with catkin:
+    set_target_properties(architecture_binding_log_boost PROPERTIES COMPILE_FLAGS -DUSE_BOOST)
+    set_target_properties(architecture_binding_log_c++11 PROPERTIES COMPILE_FLAGS -std=c++11)
+    # This would be better, but when compiling with catkin (and on bloom prerelease), has error 
+    # "<command-line>:0:1: error: macro names must be identifiers":
+    # target_compile_definitions(architecture_log_boost PUBLIC -DBOOST)
+    # can look into this at some point, but for now this will work.
+endif ((CMAKE_VERSION VERSION_GREATER 2.8.12) OR (CMAKE_VERSION VERSION_EQUAL 2.8.12))
 
 ## Add cmake target dependencies of the library
 if (catkin_FOUND)
-    add_dependencies(architecture_binding_log ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+    if (COMPILE_BOOST)
+        add_dependencies(architecture_binding_log_boost ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+    endif (COMPILE_BOOST)
+    if (COMPILE_C++11)
+        add_dependencies(architecture_binding_log_c++11 ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+    endif (COMPILE_C++11)
 endif (catkin_FOUND)
 
 ## Declare a C++ executable
@@ -92,17 +151,25 @@ endif (catkin_FOUND)
 
 ## Specify libraries to link a library or executable target against
 if (catkin_FOUND)
-  target_link_libraries(architecture_binding_log
-    ${catkin_LIBRARIES}
-    ${Boost_LIBRARIES}
-  )
+    set (LINK_LIBS ${catkin_LIBRARIES})
 endif (catkin_FOUND)
+  
+if (COMPILE_BOOST)
+    target_link_libraries(architecture_binding_log_boost
+        ${LINK_LIBS}
+        ${Boost_LIBRARIES}
+    )
+endif (COMPILE_BOOST)
+if (COMPILE_C++11)
+    target_link_libraries(architecture_binding_log_c++11
+        ${LINK_LIBS}
+    )
+endif (COMPILE_C++11)
 
 
 #############
 ## Install ##
 #############
-
 
 if (catkin_FOUND) 
     # all install targets should use catkin DESTINATION variables
@@ -118,13 +185,24 @@ else (catkin_FOUND)
     set ( SHARE_DESTINATION ${CMAKE_INSTALL_PREFIX}/share/)
 endif (catkin_FOUND) 
 
+if (COMPILE_BOOST)
+    set(INSTALL_LIBS architecture_binding_log_boost)
+endif (COMPILE_BOOST)
+if (COMPILE_C++11)
+    set(INSTALL_LIBS ${INSTALL_LIBS} architecture_binding_log_c++11)
+endif (COMPILE_C++11)
 
 
 ## Mark executables and/or libraries for installation
-install(TARGETS architecture_binding_log 
+install(TARGETS ${INSTALL_LIBS} 
+   EXPORT architecture_binding_targets
    ARCHIVE DESTINATION ${LIB_DESTINATION}
    LIBRARY DESTINATION ${LIB_DESTINATION}
    RUNTIME DESTINATION ${LIB_DESTINATION}
+)
+
+install(EXPORT architecture_binding_targets 
+   DESTINATION ${LIB_DESTINATION}
 )
 
 install(FILES
@@ -134,6 +212,10 @@ install(FILES
     DESTINATION ${INCLUDE_DESTINATION}
 )
 
+install(FILES
+    cmake/CMakeArchConfig.cmake.in
+    DESTINATION ${LIB_DESTINATION}/${PROJECT_NAME}
+)
 
 
 #############
