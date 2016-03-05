@@ -23,8 +23,6 @@
 */
 #endif
 
-
-
 #include <iostream>
 #include <sstream>
 
@@ -32,6 +30,8 @@
 #include <sensor_msgs/JointState.h>
 #include <arm_components_name_manager/ArmComponentsNameManager.h>
 #include <architecture_binding/Thread.h>
+
+// #include <convenience_ros_functions/TypedSubscriber.h>
 
 namespace arm_components_name_manager
 {
@@ -47,8 +47,11 @@ namespace arm_components_name_manager
 class ArmJointStateSubscriber
 {
 public:
-    ArmJointStateSubscriber(const ArmComponentsNameManager& _manager,
-                            ros::NodeHandle& n, const std::string& joint_states_topic);
+    ArmJointStateSubscriber(
+        const ArmComponentsNameManager& _manager,
+        ros::NodeHandle& n,
+        const std::string& joint_states_topic);
+
     ~ArmJointStateSubscriber();
 
     friend std::ostream& operator<<(std::ostream& o, const ArmJointStateSubscriber& j)
@@ -87,8 +90,10 @@ public:
     bool isActive() const;
 private:
     typedef architecture_binding::unique_lock<architecture_binding::recursive_mutex>::type unique_lock;
+    // typedef convenience_ros_functions::TypedSubscriber<sensor_msgs::JointState> JointStateSubscriber;
 
     void callback(const sensor_msgs::JointState& msg);
+//    void process(const ros::TimerEvent& t);
 
     ros::Time getLastUpdateTime() const;
 
@@ -102,8 +107,11 @@ private:
     std::vector<float> gripper_angles;
 
     ros::NodeHandle node;
+
+/*    JointStateSubscriber subscriber;
+    ros::Timer update_connection;*/
     ros::Subscriber subscriber;
-    bool subscriberActive;
+    bool subscriberActive; 
     ros::Time last_update_time;
 };
 }  // namespace

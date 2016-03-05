@@ -177,3 +177,36 @@ void ROSFunctions::effectOnGoalHandle(const actionlib::SimpleClientGoalState& st
         ROS_ERROR("ROSFunctions: Unknown goal handle");
     }
 }
+
+template<typename GH>
+void ROSFunctions::effectOnGoalHandle(const actionlib::SimpleClientGoalState& state, GH& goalHandle)
+{
+    if (state == actionlib::SimpleClientGoalState::SUCCEEDED)
+    {
+        goalHandle.setSucceeded();
+    }
+    else if (actionlib::SimpleClientGoalState::REJECTED)
+    {
+        goalHandle.setAborted();
+    }
+    else if ((state == actionlib::SimpleClientGoalState::RECALLED) ||
+             (state == actionlib::SimpleClientGoalState::PREEMPTED))
+    {
+        goalHandle.setCanceled();
+    }
+    else if ((state == actionlib::SimpleClientGoalState::ACTIVE) ||
+             (state == actionlib::SimpleClientGoalState::PENDING))
+    {
+        goalHandle.setAccepted();
+    }
+    else if ((state == actionlib::SimpleClientGoalState::LOST) ||
+             (state == actionlib::SimpleClientGoalState::ABORTED))
+    {
+        goalHandle.setAborted();
+    }
+    else
+    {
+        ROS_ERROR("ROSFunctions: Unknown goal handle");
+    }
+}
+

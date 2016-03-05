@@ -44,14 +44,13 @@ namespace architecture_binding
 typedef boost::thread thread;
 typedef boost::mutex mutex;
 typedef boost::recursive_mutex recursive_mutex;
+typedef boost::condition_variable condition_variable;
+typedef boost::posix_time::time_duration duration;
 
-/*template <class T>
-class unique_lock: public boost::unique_lock<T>
-{ };
-
-template <class T>
-class unique_recursive_lock: public boost::unique_recursive_lock<T>
-{ };*/
+static duration get_duration_secs(double secs)
+{
+    return duration(0,0,secs,0);
+}
 
 // make typedefs of this as follows:
 // typedef architecture_binding::unique_lock<CLASS>::type CLASSPtr;
@@ -72,15 +71,13 @@ struct unique_lock
 typedef std::thread thread;
 typedef std::mutex mutex;
 typedef std::recursive_mutex recursive_mutex;
+typedef std::condition_variable condition_variable;
+typedef std::chrono::duration;
 
-/*template <class T>
-class unique_lock: public std::unique_lock<T>
-{ };
-
-template <class T>
-class unique_recursive_lock: public std::unique_recursive_lock<T>
-{ };*/
-
+static duration get_duration_secs(double secs)
+{
+    return std::chrono::seconds(secs);
+}
 
 // make typedefs of this as follows:
 // typedef architecture_binding::unique_lock<CLASS>::type CLASSPtr;

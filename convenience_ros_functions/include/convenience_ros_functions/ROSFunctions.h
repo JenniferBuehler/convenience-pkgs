@@ -193,13 +193,18 @@ public:
                                 const Res& res, const std::string& s);
 
     /**
-     * uses the SimpleClientGoalState to set the ServerGoalHandle such that if this SimpleClientGoalState happens
-     * internally, this is the state the goal handle gets set to. E.g. if SimpleClientGoalState is rejected,
+     * Uses the SimpleClientGoalState to set the ServerGoalHandle to the
+     * corresponding state. E.g. if SimpleClientGoalState is rejected,
      * the ServerGoalHandle gets aborted (not also rejected).
      */
     template<typename GH, typename Res>
     static void effectOnGoalHandle(const actionlib::SimpleClientGoalState& state, GH& goalHandle,
                                    const Res& res, const std::string& s = "");
+    /**
+     * Like other effectOnGoalHandle(), but without result type and error string.
+     */
+    template<typename GH>
+    static void effectOnGoalHandle(const actionlib::SimpleClientGoalState& state, GH& goalHandle);
 
 private:
     static int hasVal(const std::string& val, const std::vector<std::string>& vec);

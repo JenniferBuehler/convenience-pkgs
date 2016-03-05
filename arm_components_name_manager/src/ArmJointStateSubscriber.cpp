@@ -22,15 +22,23 @@
 
 #include <arm_components_name_manager/ArmJointStateSubscriber.h>
 
+#define CHECK_UPDATE_RATE 50
+
 using arm_components_name_manager::ArmJointStateSubscriber;
 
 ArmJointStateSubscriber::ArmJointStateSubscriber(const ArmComponentsNameManager& _manager,
         ros::NodeHandle& n, const std::string& joint_states_topic):
-    jointsManager(_manager), node(n), valid_arm(false),
-    valid_grippers(false), subscriberActive(false),
+    jointsManager(_manager),
+    node(n),
+    valid_arm(false),
+    valid_grippers(false),
+    // subscriber(n),
+    subscriberActive(false),
     last_update_time(0)
 {
     subscriber = node.subscribe(joint_states_topic, 1000, &ArmJointStateSubscriber::callback, this);
+/*    subscriber.start(joint_states_topic);
+    update_connection = n.createTimer(ros::Duration(1.0 / CHECK_UPDATE_RATE), &ArmJointStateSubscriber::process, this);*/
 }
 ArmJointStateSubscriber::~ArmJointStateSubscriber() {}
 
@@ -38,12 +46,14 @@ void ArmJointStateSubscriber::setActive(bool flag)
 {
     unique_lock lock(mutex);
     subscriberActive = flag;
+    // subscriber.setActive(flag);
 }
 
 bool ArmJointStateSubscriber::isActive() const
 {
     unique_lock lock(mutex);
     return subscriberActive;
+    // return subscriber.isActive();
 }
 
 bool ArmJointStateSubscriber::waitForUpdate(float timeout, float checkStepTime) const
@@ -104,9 +114,22 @@ std::string ArmJointStateSubscriber::toString() const
 
 
 void ArmJointStateSubscriber::callback(const sensor_msgs::JointState& msg)
+//void ArmJointStateSubscriber::process(const ros::TimerEvent& t)
 {
     if (!isActive()) return;
-    
+
+    /*
+    // get the newest message
+    sensor_msgs::JointState msg;
+    float rate = 1.0 / CHECK_UPDATE_RATE;
+    float timeout = 5 * rate;
+    float checkStepTime = timeout / 4.0;
+    bool gotMessage = subscriber.waitForNextMessage(msg, timeout, checkStepTime);
+    // do another thread loop, no new message has arrived so far
+    if (!gotMessage) return;
+    // ROS_INFO("Processing...");   
+    */
+
     std::vector<int> idx;
     // Get joint indices in msg.
     // Returns 0 if all joints present, 1 if only arm joints present, and 2 if only gripper joints present.
@@ -134,7 +157,7 @@ void ArmJointStateSubscriber::callback(const sensor_msgs::JointState& msg)
 
     if ((idxGroup == 0) || (idxGroup == 1))
     {
-        if (arm_angles.size() < numArmJnts) arm_angles.resize(numArmJnts, 0);
+        arm_angles.assign(numArmJnts, 0);
         bool allFound = true;
         for (int i = 0; i < numArmJnts; ++i)
         {

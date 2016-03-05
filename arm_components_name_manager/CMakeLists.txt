@@ -9,6 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   convenience_math_functions
   architecture_binding 
+  # convenience_ros_functions
 )
 
 include(cmake/architecture_binding.cmake.in)
@@ -45,7 +46,7 @@ include(cmake/architecture_binding.cmake.in)
 catkin_package(
     INCLUDE_DIRS include
     LIBRARIES arm_components_name_manager
-    CATKIN_DEPENDS roscpp sensor_msgs convenience_math_functions architecture_binding
+    CATKIN_DEPENDS roscpp sensor_msgs convenience_math_functions architecture_binding #convenience_ros_functions 
 #   DEPENDS system_lib
     CFG_EXTRAS architecture_binding.cmake.in
 )
