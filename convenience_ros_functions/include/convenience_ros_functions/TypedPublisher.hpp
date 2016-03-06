@@ -1,8 +1,5 @@
-namespace convenience_ros_functions
-{
-
 template<typename Msg>
-void TypedPublisher::start(const std::string& _topic, int queue_size=100)
+void TypedPublisher<Msg>::start(const std::string& _topic, int queue_size)
 {
     unique_lock lock (mutex);    
     if (running && (topic==_topic)) return;
@@ -13,17 +10,16 @@ void TypedPublisher::start(const std::string& _topic, int queue_size=100)
 }
 
 template<typename Msg>
-void TypedPublisher::stop(){
+void TypedPublisher<Msg>::stop(){
     unique_lock lock (mutex);    
     running=false;
     pub.shutdown();
 }
 
 template<typename Msg>
-void TypedPublisher::publish(MessageType& m){
-    unique_lock lock (mutex);    
+void TypedPublisher<Msg>::publish(MessageType& m)
+{
+    unique_lock lock(mutex);    
     if (!running) return;
     pub.publish(m);
 }
-
-}  // namespace

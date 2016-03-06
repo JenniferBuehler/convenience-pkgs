@@ -23,76 +23,50 @@ namespace convenience_ros_functions
 template<class ActionMessage>
 class ActionServer
 {
+    ACTION_DEFINITION(ActionMessage) 
 protected:
-    
     typedef ActionServer<ActionMessage> Self;
 
     typedef actionlib::ActionServer<ActionMessage> ROSActionServerT;
     // typedef typename architecture_binding::shared_ptr<ROSActionServerT> ROSActionServerPtr;
     typedef ROSActionServerT * ROSActionServerPtr;
-    typedef typename ROSActionServerT::GoalHandle ActionGoalHandle;
-    typedef typename ActionMessage::_action_result_type ActionResult;
-    typedef typename ActionMessage::_action_goal_type ActionGoal;
-    typedef typename ActionMessage::_action_feedback_type ActionFeedback;
+    typedef typename ROSActionServerT::GoalHandle ActionGoalHandleT;
 
+    typedef Goal GoalT;
+    typedef GoalConstPtr GoalConstPtrT;
+    typedef ActionGoal ActionGoalT;
+    typedef ActionGoalPtr ActionGoalPtrT;
+    typedef ActionGoalConstPtr ActionGoalConstPtrT;
+    typedef ActionResult ActionResultT;
+    typedef ActionResultConstPtr ActionResultConstPtrT;
+    typedef Result ResultT;
+    typedef ResultConstPtr ResultConstPtrT;
+    typedef Feedback FeedbackT;
+    typedef FeedbackConstPtr FeedbackConstPtrT;
+    typedef ActionFeedback ActionFeedbackT;
+    typedef ActionFeedbackConstPtr ActionFeedbackConstPtrT;
 public:
+ 
     ActionServer<ActionMessage>(
             ros::NodeHandle& _node, 
-            const std::string& action_topic): 
-        node(_node),
-        initialized(false),
-        hasGoal(false),
-        actionTopic(action_topic),
-        lastExeSuccess(false),
-        actionServer(NULL),
-        startTime(0), endTime (0)
-    {
-    }
-
-    virtual ~ActionServer<ActionMessage>(){
-        this->deleteServer();    
-    }
-       
+            const std::string& action_topic);
+    virtual ~ActionServer<ActionMessage>();
+      
  
 	/**
 	 * Starts action server and does internal initialisation.
 	 */
-    bool init()
-    {
-        startServer();
-        bool success=initImpl();
-        if (success) initialized = true;
-        return success;
-    }
+    bool init();
 
 	/**
  	 * Methods to be executed for shutting down the action server
 	 */
-    void shutdown()
-    {
-        this->shutdownImpl();
-        deleteServer();
-        initialized = false;
-    }
-
+    void shutdown();
 
     /**
      * Checks whether there is currently a goal, and it is also active.
      */
-    bool executingGoal(){
-        goalLock.lock();
-        bool hasOneGoal=hasGoal;
-        bool cancelled=false;
-        if (hasOneGoal) {
-            actionlib_msgs::GoalStatus stat=currentGoal.getGoalStatus();
-            cancelled= (stat.status != actionlib_msgs::GoalStatus::ACTIVE);
-                //(stat.status == actionlib_msgs::GoalStatus::PREEMPTED) 
-                //|| (stat.status == actionlib_msgs::GoalStatus::ABORTED)
-                //|| (stat.status == actionlib_msgs::GoalStatus::LOST);
-        }
-        goalLock.unlock();
-        return ros::ok() && !cancelled && hasOneGoal;
-    }
+    bool executingGoal();
 
 protected:
 
@@ -102,82 +76,25 @@ protected:
      * \return the duration of the wait. If the action has already finished
      *      (is not running), returns the duration of the last executed action.
      */
-    virtual float waitForExecution(float timeout){
-        unique_lock guard(executionFinishedMutex);
-        
-        double exeTime=timeRunning(); //time the action already has been running
-        
-        ros::Time startWait=ros::Time::now();
-        
-        // Check if the action had already ended. This can
-        // happen if he execution was so quick between starting it
-        // and calling waitForExecution(), that it is ok to return the
-        // last execution time. 
-        if (!this->hasCurrentGoal()) return exeTime; 
-    
-        bool success=true;
-        if (timeout < 0){
-            // Unlocks the mutex and waits for a notification.
-            this->executionFinishedCondition.wait(guard);
-        }else{    
-            // Unlocks the mutex and waits for a notification.
-            success = this->executionFinishedCondition.timed_wait(guard, architecture_binding::get_duration_secs(timeout));
-        }
-        if (!success) return -1;
+    virtual float waitForExecution(float timeout);
 
-        ros::Time endWait=ros::Time::now();
-        float totalTime= exeTime+(endWait-startWait).toSec(); 
-        return totalTime;
-    }
-
-
-    //Time (in seconds) which has passed since the action has been started.
-    double timeRunning(){
-        double ret=-1;
-        if (this->hasCurrentGoal()){
-            unique_lock lock(goalLock);
-            ros::Time nowTime=ros::Time::now();
-            ret=ros::Duration(nowTime-startTime).toSec();
-        }else{
-            unique_lock lock(goalLock);
-            ret=ros::Duration(endTime-startTime).toSec();
-        }
-        return ret;
-    }
-
+    /**
+     * Time (in seconds) which has passed since the action has been started.
+     */
+    double timeRunning();
 
     /**
      * Method to call from subclasses to signal that the currently running goal has finished.
      * Alternatively, other methods called currentActionDone() can be called which have the 
      * same effect but less descriptive outcomes for the action result.
      */
-    void currentActionDone(ActionResult& result, const actionlib::SimpleClientGoalState& state){
-        ROS_INFO_STREAM(this->actionTopic<<": Action finished. Result = "<<result);
-        unique_lock guard( executionFinishedMutex );
-        goalLock.lock();
-        endTime=ros::Time::now();
-        hasGoal = false;
-        ROSFunctions::effectOnGoalHandle(state,currentGoal,result);
-        lastExeSuccess=(state==actionlib::SimpleClientGoalState::SUCCEEDED);
-        goalLock.unlock();
-        executionFinishedCondition.notify_all();
-    }
+    void currentActionDone(ResultT& result, const actionlib::SimpleClientGoalState& state);
 
     /**
      * Simpler implementation of currentActionDone(ActionResult&, const actionlib::SimpleClientGoalState&)
      * which does not take a result.
      */
-    void currentActionDone(const actionlib::SimpleClientGoalState& state){
-        ROS_INFO_STREAM(this->actionTopic<<": Action finished. SimpleClientGoalState = "<<state);
-        unique_lock guard( executionFinishedMutex );
-        goalLock.lock();
-        endTime=ros::Time::now();
-        hasGoal = false;
-        ROSFunctions::effectOnGoalHandle(state,currentGoal);
-        lastExeSuccess=(state==actionlib::SimpleClientGoalState::SUCCEEDED);
-        goalLock.unlock();
-        executionFinishedCondition.notify_all();
-    }
+    void currentActionDone(const actionlib::SimpleClientGoalState& state);
    
     /**
      * Simple implementation of other currentActionDone() methods but which has same
@@ -188,18 +105,12 @@ protected:
      * that it recursively calls itself, instead of calling
      * currentActionDone(const actionlib::SimpleClientGoalState).
      */ 
-    void currentActionSuccess(const bool success){
-        ROS_INFO_STREAM(this->actionTopic<<": Action finished. Success = "<<success);
-        if (success) currentActionDone(actionlib::SimpleClientGoalState::SUCCEEDED);
-        else currentActionDone(actionlib::SimpleClientGoalState::ABORTED);
-    }
+    void currentActionSuccess(const bool success);
 
     /**
      * Can be implemented by subclasses. This is called from init().
      */
-    virtual bool initImpl(){
-        return true;
-    }
+    virtual bool initImpl();
     
     /**
      * Can be implemented by subclasses. This is called from shutdown().
@@ -212,7 +123,7 @@ protected:
      * this method returns false. Will *always* be called immediately
      * before actionCallbackImpl().
      */
-    virtual bool canAccept(const ActionGoalHandle& goal)=0;
+    virtual bool canAccept(const ActionGoalHandleT& goal)=0;
 
     /**
      * Receive a new goal: subclasses implementation. No need to set the goal to accepted, rejected, etc.
@@ -223,90 +134,32 @@ protected:
      * Once the action is done, call method currentActionDone() to finalize the execution of
      * this goal.
      */
-    virtual void actionCallbackImpl(const ActionGoalHandle& goal)=0;
+    virtual void actionCallbackImpl(const ActionGoalHandleT& goal)=0;
 
     /**
      * Receive a cancel instruction: subclasses implementation.
      * Only needs to be implemented if any special actions are required
      * upon canceling the action. 
      */
-    virtual void actionCancelCallbackImpl(ActionGoalHandle& goal) {}
+    virtual void actionCancelCallbackImpl(ActionGoalHandleT& goal) {}
 
 private:
 
-    void startServer()
-    {
-        if (actionServer)
-        {
-            delete actionServer;
-        }
-        actionServer = new ROSActionServerT(this->node,
-            this->actionTopic,
-            boost::bind(&Self::actionCallback, this, _1),
-            boost::bind(&Self::actionCancelCallback, this, _1),
-            false);
-        actionServer->start();
-    }
+    void startServer();
 
-    void deleteServer(){
-        if (this->actionServer) {
-            delete actionServer;
-            this->actionServer=NULL; //ROSActionServerPtr();
-        }
-    }
+    void deleteServer();
 
     /**
      * Receive a new goal
      */
-    void actionCallback(ActionGoalHandle& goal){
-        ROS_INFO("ActionServer: received new goal.");
-        if (!this->initialized) {
-            ROS_ERROR("Action server not initialised, can't accept goal");
-            goal.setRejected();
-            return;
-        }
-
-        if (this->hasCurrentGoal()){
-            ROS_ERROR_STREAM(this->actionTopic<<": Goal currently running, can't accept this new goal");
-            goal.setRejected();
-            return;
-        }
-    
-        // ROS_INFO("Checking whether goal can be accepted: ");
-        if (!this->canAccept(goal))
-        {
-            ROS_ERROR_STREAM(this->actionTopic<<": Goal cannot be accepted");
-            goal.setRejected();
-            return;
-        }
-
-        ROS_INFO_STREAM(this->actionTopic<<": Goal accepted.");
-        
-        goalLock.lock();
-        startTime=ros::Time::now();
-        lastExeSuccess = false;
-        hasGoal = true;
-        currentGoal=goal;
-        currentGoal.setAccepted();
-        goalLock.unlock();
-        
-        this->actionCallbackImpl(goal);
-
-    }
+    void actionCallback(ActionGoalHandleT& goal);
 
     /**
      * Receive a cancel instruction
      */
-    void actionCancelCallback(ActionGoalHandle& goal){
-        this->actionCancelCallbackImpl(goal);
-        currentActionDone(actionlib::SimpleClientGoalState::ABORTED);
-    }
+    void actionCancelCallback(ActionGoalHandleT& goal);
 
-    bool hasCurrentGoal(){
-        unique_lock lock(goalLock);
-        return hasGoal;
-    }
-
+    bool hasCurrentGoal();
 
     typedef architecture_binding::recursive_mutex recursive_mutex;
     typedef architecture_binding::mutex mutex;
@@ -322,7 +175,7 @@ private:
     bool initialized;
     bool hasGoal;
     bool lastExeSuccess;
-    ActionGoalHandle currentGoal;
+    ActionGoalHandleT currentGoal;
     mutex goalLock; //to lock access to currentGoal
 
     ROSActionServerPtr actionServer;
@@ -331,6 +184,7 @@ private:
     mutex executionFinishedMutex;
 };
 
+#include <convenience_ros_functions/ActionServer.hpp>
 
 }  // namespace
 #endif   // CONVENIENCE_ROS_FUNCTIONS_ACTIONSERVER_H

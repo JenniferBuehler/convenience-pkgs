@@ -1,8 +1,5 @@
-namespace convenience_ros_functions
-{
-
 template<typename Msg>
-void TypedSubscriber::start(const std::string& _topic){
+void TypedSubscriber<Msg>::start(const std::string& _topic){
     unique_recursive_lock lock(generalMutex);
     if (running && (topic==_topic)) return;
     if (running) stop();
@@ -12,7 +9,7 @@ void TypedSubscriber::start(const std::string& _topic){
 }
 
 template<typename Msg>
-void TypedSubscriber::stop(){
+void TypedSubscriber<Msg>::stop(){
     unique_recursive_lock lock(generalMutex);
     if (!running) return;
     running=false;
@@ -20,7 +17,7 @@ void TypedSubscriber::stop(){
 }
 
 template<typename Msg>
-void TypedSubscriber::setActive(bool flag)
+void TypedSubscriber<Msg>::setActive(bool flag)
 {
     unique_recursive_lock lock(generalMutex);
     if (subscriberActive == flag) return;
@@ -33,21 +30,21 @@ void TypedSubscriber::setActive(bool flag)
 }
 
 template<typename Msg>
-bool TypedSubscriber::isActive() const
+bool TypedSubscriber<Msg>::isActive() const
 {
     unique_recursive_lock lock(generalMutex);
     return subscriberActive;
 }
 
 template<typename Msg>
-bool TypedSubscriber::isRunning() const
+bool TypedSubscriber<Msg>::isRunning() const
 {
     unique_recursive_lock lock(generalMutex);
     return running;
 }
 
 template<typename Msg>
-bool TypedSubscriber::getLastMessage(MessageType& msg) const
+bool TypedSubscriber<Msg>::getLastMessage(Msg& msg) const
 {
     unique_recursive_lock lock(generalMutex);
     if (getLastUpdateTime() < 1e-03) return false;
@@ -56,10 +53,11 @@ bool TypedSubscriber::getLastMessage(MessageType& msg) const
 }
 
 template<typename Msg>
-bool TypedSubscriber::waitForNextMessage(MessageType& msg, float timeout = -1, float wait_step=0.05) const {
+bool TypedSubscriber<Msg>::waitForNextMessage(Msg& msg, float timeout, float wait_step) const
+{
     if (!isActive())
     {
-        ROS_ERROR("Called TypedSubscriber::waitForNextMessage() without calling TypedSubscriber::setActive(true) first");
+        ROS_ERROR("Called TypedSubscriber<Msg>::waitForNextMessage() without calling TypedSubscriber<Msg>::setActive(true) first");
         return false;
     }
 
@@ -104,14 +102,14 @@ bool TypedSubscriber::waitForNextMessage(MessageType& msg, float timeout = -1, f
 }
 
 template<typename Msg>
-ros::Time TypedSubscriber::getLastUpdateTime() const
+ros::Time TypedSubscriber<Msg>::getLastUpdateTime() const
 {
     unique_recursive_lock glock(generalMutex);
     return lastUpdateTime;
 }
 
 template<typename Msg>
-void TypedSubscriber::msgCallback(const MessageType& _msg)
+void TypedSubscriber<Msg>::msgCallback(const Msg& _msg)
 {
     //ROS_INFO_STREAM("TYPED CALLBACK "<<_msg);
     unique_lock mlock(messageArrivedMutex);
@@ -121,4 +119,3 @@ void TypedSubscriber::msgCallback(const MessageType& _msg)
     lastUpdateTime = ros::Time::now();
 }
 
-}  // namespace

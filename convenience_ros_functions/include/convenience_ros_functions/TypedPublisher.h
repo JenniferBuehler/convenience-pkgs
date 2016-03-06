@@ -24,35 +24,15 @@ class TypedPublisher {
     ~TypedPublisher(){}
 
     void start(const std::string& _topic, int queue_size=100);
-/*    {
-        unique_lock lock (mutex);    
-        if (running && (topic==_topic)) return;
-        if (running) stop();
-        topic=_topic;
-        pub= node.advertise<MessageType>(topic,queue_size,true);
-        running=true;
-    }
-*/
+
     void stop();
-/*    {
-        unique_lock lock (mutex);    
-        running=false;
-        pub.shutdown();
-    }
-*/
+
     void publish(MessageType& m);
-/*    {
-        unique_lock lock (mutex);    
-        if (!running) return;
-        pub.publish(m);
-    }
-*/
 
     private:
     
     typedef architecture_binding::mutex mutex;
     typedef architecture_binding::unique_lock<mutex>::type unique_lock;
-
 
     mutex mutex;
     
