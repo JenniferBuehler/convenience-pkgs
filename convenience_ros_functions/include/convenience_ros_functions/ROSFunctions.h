@@ -62,7 +62,7 @@ public:
     static bool readFromBagFile(const std::string& filename, std::vector<ROSMessage>& msgs);
 
     /**
-     * Takes joint_state and re-assigns all it's fields with the values
+     * Takes \e joint_state and re-assigns all its fields with the values
      * in target_joints, if the same joint appears in there.
      * All values in target_joints which are not in joint_state, are added to it.
      */
@@ -77,28 +77,41 @@ public:
      *
      * We may impose the restriction that ALL values in s1 also HAVE TO appear in
      * s2 (s2 is subset of s1), by setting the parameter s2_is_subset to true. In this case, the function
-     * will return an error if s2 is not subset of s1, this can be used to check consistency.
+     * will return an error if s2 is not subset of s1. This can be used to check consistency.
      */
     static bool intersectJointState(const sensor_msgs::JointState& s1, const sensor_msgs::JointState& s2,
                                     sensor_msgs::JointState& result,
                                     bool init_s1, bool s2_is_subset);
 
     /**
-     * we want to say s1=s2, but only copying the values in s2 that also appear in s1.
+     * Works like doing s1=s2, but only copying the values in s2 that also appear in s1.
      * We may impose the restriction that ALL values in s1 also HAVE TO appear in s2 (s2 is subset of s1),
      * by setting the parameter s2_is_subset to true. In this case, the function will
-     * return an error if s2 is not subset of s1, this can be used to check consistency.
+     * return an error if s2 is not subset of s1. This can be used to check consistency.
      */
     static bool intersectJointStates(const sensor_msgs::JointState& s1,
-                                     const sensor_msgs::JointState& s2, sensor_msgs::JointState& result, bool s2_is_subset);
+                                     const sensor_msgs::JointState& s2,
+                                    sensor_msgs::JointState& result, bool s2_is_subset);
 
 
     /**
-     * Simple implementation to compare joint states.
+     * Simple implementation to compare joint states, similar to equalJointPositions(), but
+     * more efficient. Instead, some assumptions are made:
      * It assumes a common subset of joints are listed (in same order)
      * at the beginning of both states. One state may be larger than the other.
      */
-    static bool equalJointPoses(const sensor_msgs::JointState& j1, const sensor_msgs::JointState& j2,
+    static bool equalJointPositionsSimple(const sensor_msgs::JointState& j1, const sensor_msgs::JointState& j2,
+                                const float pos_tolerance);
+   
+    /**
+     * Compares joint states: All joints appearing in *both* joint states are required to be
+     * as similar as \e pos_tolerance
+     * \retval 1 requirements satisfied
+     * \retval -1 requirements not satisfied
+     * \retval -2 there is no complete intersection of both joint states
+     * \retval <-2 other consistency error 
+     */ 
+    static int equalJointPositions(const sensor_msgs::JointState& j1, const sensor_msgs::JointState& j2,
                                 const float pos_tolerance);
 
 

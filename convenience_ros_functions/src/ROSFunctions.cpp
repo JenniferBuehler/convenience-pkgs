@@ -448,7 +448,7 @@ bool ROSFunctions::intersectJointStates(const sensor_msgs::JointState& s1, const
 }
 
 
-bool ROSFunctions::equalJointPoses(const sensor_msgs::JointState& j1,
+bool ROSFunctions::equalJointPositionsSimple(const sensor_msgs::JointState& j1,
                                    const sensor_msgs::JointState& j2, const float pos_tolerance)
 {
     for (int i = 0; i < j1.name.size(); ++i)
@@ -460,6 +460,32 @@ bool ROSFunctions::equalJointPoses(const sensor_msgs::JointState& j1,
     return true;
 }
 
+int ROSFunctions::equalJointPositions(const sensor_msgs::JointState& j1,
+                                   const sensor_msgs::JointState& j2, const float pos_tolerance)
+{
+    /// Probably can be implemented more efficient, but for no this will do
+
+    sensor_msgs::JointState intersectJS;
+
+    if (!intersectJointState(j1, j2, intersectJS, true, true))
+    {
+        return -2;
+    }
+
+    // intersectJS is not initialized with values in j1.
+    // because j2 was required to be subset of j1 in intersectJointState(),
+    // now intersectJS and j2 have to be of same size, and have same order of
+    // joints as j1.
+    if (!intersectJS.position.size() != j2.position.size())
+    {
+        return -3;
+    }
+    if (!ROSFunctions::equalJointPositionsSimple(intersectJS, j2, pos_tolerance))
+    {
+        return -1;
+    }
+    return 1;
+}
 
 bool ROSFunctions::getJointStateAt(int idx, const trajectory_msgs::JointTrajectory& traj,
                                    sensor_msgs::JointState& result)

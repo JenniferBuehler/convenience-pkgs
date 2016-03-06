@@ -23,6 +23,11 @@
     # before all joints in gripper_joints.
     palm_link: <palm_link_name> 
 
+    # name of the link which is considered to be the end effector
+    # which is used to position the effector before grasping
+    # objects. Defaults to palm_link if not specified.
+    effector_link: <effector_link_name>
+
     # Names of the arm joints *without* the gripper joints.
     # These are the joints which are used to move the arm in
     # pre-grasp state, but which are *not* part of the acutal

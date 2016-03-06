@@ -186,6 +186,13 @@ public:
      * before all joints in gripper_joints.
      */
     const std::string& getPalmLink() const;
+    
+    /**
+     * Returns name of the link which is considered to be the end effector
+     * which is used to position the effector before grasping
+     * objects. Defaults to palm_link if not specified in ROS parameters.
+     */
+    const std::string& getEffectorLink() const;
 
     /**
      * Get all links for the arm, *excluding* the palm link
@@ -297,6 +304,7 @@ public:
      *      order as \e _gripper_joints.
      */
     void setValues(const std::string& _palm_link,
+                   const std::string& _effector_link,
                    const std::vector<std::string>& _arm_joints, const std::vector<std::string>& _arm_links,
                    const std::vector<std::string>& _gripper_joints, const std::vector<std::string>& _gripper_links,
                    const std::vector<float>& _arm_joint_init, const std::vector<float>& _gripper_joint_init);
@@ -372,6 +380,13 @@ private:
      * before all joints in gripper_joints.
      */
     std::string palm_link;
+    
+    /**
+     * name of the link which is considered to be the end effector
+     * which is used to position the effector before grasping
+     * objects. Defaults to palm_link if not specified.
+     */
+    std::string effector_link;
 
     /**
      * initial ("Home") pose of the arm joints. Has to be the same

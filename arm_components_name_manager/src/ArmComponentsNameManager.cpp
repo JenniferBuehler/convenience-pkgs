@@ -89,6 +89,13 @@ int ArmComponentsNameManager::loadParameters(bool printErrors)
     }
     ++numSpecs;
 
+    // ROS_INFO_STREAM("Reading effector_link:");
+    robot_nh.getParam("effector_link", effector_link);
+    if (effector_link.empty())
+    {
+        ROS_INFO("INFO: effector_link not specified, defaulting to same as palm_link");
+    }
+
     // --- arm parameters
 
     // ROS_INFO_STREAM("Reading arm_joints:");
@@ -346,6 +353,11 @@ const std::string& ArmComponentsNameManager::getPalmLink() const
     return palm_link;
 }
 
+const std::string& ArmComponentsNameManager::getEffectorLink() const
+{
+    return effector_link;
+}
+
 const std::vector<std::string>& ArmComponentsNameManager::getArmLinks() const
 {
     return arm_links;
@@ -589,11 +601,13 @@ int ArmComponentsNameManager::numGripperJoints() const
 
 
 void ArmComponentsNameManager::setValues(const std::string& _palm_link,
+        const std::string& _effector_link,
         const std::vector<std::string>& _arm_joints, const std::vector<std::string>& _arm_links,
         const std::vector<std::string>& _gripper_joints, const std::vector<std::string>& _gripper_links,
         const std::vector<float>& _arm_joint_init, const std::vector<float>& _gripper_joint_init)
 {
     palm_link = _palm_link;
+    effector_link = _effector_link;
     arm_joints = _arm_joints;
     arm_links = _arm_links;
     gripper_joints = _gripper_joints;
