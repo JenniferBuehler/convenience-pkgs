@@ -40,6 +40,7 @@ ArmComponentsNameManager::ArmComponentsNameManager(const std::string& _robot_nam
 
 ArmComponentsNameManager::ArmComponentsNameManager(const ArmComponentsNameManager& o):
     palm_link(o.palm_link),
+    effector_link(o.effector_link),
     arm_joints(o.arm_joints),
     arm_links(o.arm_links),
     gripper_joints(o.gripper_joints),
@@ -61,6 +62,7 @@ bool ArmComponentsNameManager::loadDefaults()
 {
     if (!hasDefaults()) return false;
     palm_link = getDefaultPalmLink();
+    effector_link = getDefaultEffectorLink();
     arm_joints = getDefaultArmJoints();
     arm_links = getDefaultArmLinks();
     arm_joint_init = getDefaultArmJointsInitPose();
@@ -94,6 +96,7 @@ int ArmComponentsNameManager::loadParameters(bool printErrors)
     if (effector_link.empty())
     {
         ROS_INFO("INFO: effector_link not specified, defaulting to same as palm_link");
+        effector_link = palm_link;
     }
 
     // --- arm parameters

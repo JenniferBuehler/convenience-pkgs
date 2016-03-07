@@ -26,7 +26,7 @@ namespace convenience_ros_functions
  * when you want the tf listener to be created and start listening. Once initSingleton()/Singleton()
  * has been called, the tf listener will keep listening, until the program ends of destroySingleton() is called.
  * It can be that the tf listener needs some time to initialize, so it's advisable to
- * call Singleton()/initSingleton() a bit before you need it for the first time.
+ * call initSingleton() before you need it for the first time in a time-critical context.
  *
  * \author Jennifer Buehler
  */
@@ -43,10 +43,22 @@ public:
     {
     }
 
-
+    /**
+     * Initializes the singleton. If this function already was called, it does nothing.
+     * Otherwise, it initializes the singleton, which will incur a small wait to ensure the tf listener
+     * has received its first frame. If a transform function is called immediately,
+     * there are sometimes problems with it.
+     * This MUST be called from a valid ROS node!
+     */
     static void initSingleton();
     static void destroySingleton();
 
+    /**
+     * Returns the singleton. If initSingleton() has not been called before,
+     * it is called from here. However it is recommended to explicitly call initSingleton()
+     * in advance. See also comment in initSingleton(). This MUST be called from a valid
+     * ROS node!
+     */
     static ROSFunctionsPtr Singleton();
 
     template<typename ROSMessage>
@@ -131,16 +143,28 @@ public:
     /**
      * Checks whether based on the current tf transforms a distance between the two poses can be obtained.
      * \param latest The lastest time of both stamps is assumed, or otherwise the most recent transform available for both
+     * \param p1 target pose
+     * \param p2 source pose
      */
     bool canGetTransform(const std_msgs::Header& p1, const std_msgs::Header& p2, bool latest, bool printError) const;
+    /**
+     * \param f1 target frame
+     * \param f2 source frame
+     */
     bool canGetTransform(const std::string& f1, const std::string& f2, const ros::Time& useTime, bool printError) const;
 
     /**
      * calls tf_listener::waitForTransform to see if distance between two poses can be obtained.
      * \param latest The lastest time of both stamps is assumed, or otherwise the most recent transform available for both
+     * \param p1 target pose
+     * \param p2 source pose
      */
     bool waitForTransform(const std_msgs::Header& p1, const std_msgs::Header& p2,
                           const float& timeout, bool latest, bool printError);
+    /**
+     * \param f1 target frame
+     * \param f2 source frame
+     */
     bool waitForTransform(const std::string& f1, const std::string& f2,
                           const ros::Time& useTime, const float& timeout, bool printError);
 
@@ -189,6 +213,8 @@ public:
 
     /**
      * gets transform between two frames
+     * \param f1 target frame
+     * \param f2 source frame
      */
     int getTransform(const std::string& f1, const std::string& f2, geometry_msgs::Pose& result,
                      const ros::Time& useTime, float maxWaitTransform, bool printErrors = true);
@@ -223,7 +249,7 @@ private:
     static int hasVal(const std::string& val, const std::vector<std::string>& vec);
 
     //static lock for general method access
-    static architecture_binding::mutex slock;
+    static architecture_binding::recursive_mutex slock;
     static ROSFunctionsPtr _singleton;
 
     //tf_listener is thread-safe so doesn't require a mutex.

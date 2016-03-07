@@ -195,14 +195,14 @@ endif (COMPILE_C++11)
 
 ## Mark executables and/or libraries for installation
 install(TARGETS ${INSTALL_LIBS} 
-   EXPORT architecture_binding_targets
+   EXPORT ${PROJECT_NAME}Config 
    ARCHIVE DESTINATION ${LIB_DESTINATION}
    LIBRARY DESTINATION ${LIB_DESTINATION}
    RUNTIME DESTINATION ${LIB_DESTINATION}
 )
 
-install(EXPORT architecture_binding_targets 
-   DESTINATION ${LIB_DESTINATION}
+install(EXPORT ${PROJECT_NAME}Config
+   DESTINATION ${LIB_DESTINATION}/${PROJECT_NAME}
 )
 
 install(FILES

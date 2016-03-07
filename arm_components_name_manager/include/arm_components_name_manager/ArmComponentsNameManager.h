@@ -327,13 +327,14 @@ public:
 
 protected:
 
-    virtual std::string getDefaultPalmLink() const {}
-    virtual std::vector<std::string> getDefaultArmJoints() const {}
-    virtual std::vector<std::string> getDefaultArmLinks() const {}
-    virtual std::vector<float> getDefaultArmJointsInitPose() const {}
-    virtual std::vector<float> getDefaultGripperJointsInitPose() const {}
-    virtual std::vector<std::string> getDefaultGripperJoints() const {}
-    virtual std::vector<std::string> getDefaultGripperLinks() const {}
+    virtual std::string getDefaultPalmLink() const { return std::string(); }
+    virtual std::string getDefaultEffectorLink() const { return std::string(); }
+    virtual std::vector<std::string> getDefaultArmJoints() const { return std::vector<std::string>(); }
+    virtual std::vector<std::string> getDefaultArmLinks() const { return std::vector<std::string>(); }
+    virtual std::vector<float> getDefaultArmJointsInitPose() const { return std::vector<float>(); }
+    virtual std::vector<float> getDefaultGripperJointsInitPose() const { return std::vector<float>(); }
+    virtual std::vector<std::string> getDefaultGripperJoints() const { return std::vector<std::string>(); }
+    virtual std::vector<std::string> getDefaultGripperLinks() const { return std::vector<std::string>(); }
 
 private:
 

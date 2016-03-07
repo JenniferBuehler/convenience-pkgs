@@ -6,10 +6,12 @@
 #include <Eigen/Geometry>
 #include <eigen_conversions/eigen_msg.h>
 
+#define INIT_SINGLETON_SLEEP_SECS 0.5
+
 using convenience_ros_functions::ROSFunctions;
 
 ROSFunctions::ROSFunctionsPtr ROSFunctions::_singleton;
-architecture_binding::mutex ROSFunctions::slock;
+architecture_binding::recursive_mutex ROSFunctions::slock;
 
 ROSFunctions::ROSFunctions(float tf_max_cache_time):
     tf_listener(ros::Duration(tf_max_cache_time))
@@ -19,7 +21,16 @@ ROSFunctions::ROSFunctions(float tf_max_cache_time):
 void ROSFunctions::initSingleton()
 {
     slock.lock();
-    if (!_singleton.get()) _singleton = ROSFunctionsPtr(new ROSFunctions());
+    if (!_singleton.get())
+    {
+        _singleton = ROSFunctionsPtr(new ROSFunctions());
+        if (!ros::ok())
+        {
+            ROS_ERROR("Calling ROSFunctions::initSingleton() outside a valid ROS context. This will likely lead to problems.");
+            return;
+        }
+        ros::Duration(INIT_SINGLETON_SLEEP_SECS).sleep();
+    }
     slock.unlock();
 }
 void ROSFunctions::destroySingleton()
@@ -34,7 +45,10 @@ ROSFunctions::ROSFunctionsPtr ROSFunctions::Singleton()
     slock.lock();
     if (!_singleton.get())
     {
-        _singleton = ROSFunctionsPtr(new ROSFunctions()); //first access to helpers, so create it
+        ROS_WARN_STREAM("Calling ROSFunctions::Singleton() without having called ROSFunctions::initSingleton()"
+            <<" before. This will incur a small wait by ROSFunctions::initSingleton() which is required"
+            <<" to wait a bit for the tf listener to get running and avoid problems with tf transforms.");
+        initSingleton(); //_singleton = ROSFunctionsPtr(new ROSFunctions()); //first access to helpers, so create it
     }
     slock.unlock();
     return ROSFunctionsPtr(_singleton);
@@ -108,7 +122,7 @@ bool ROSFunctions::waitForTransform(const std::string& f1, const std::string& f2
     //ROS_INFO_STREAM("Waiting for transform using time "<<useTime);
     if (!tf_listener.waitForTransform(f1, f2, useTime, ros::Duration(timeout), ros::Duration(0.01), &error_msg))
     {
-        if (printError) ROS_ERROR("Failed to wait for transform between frames %s and %s: %s", f1.c_str(), f2.c_str(), error_msg.c_str());
+        if (printError) ROS_ERROR("Failed to wait for transform between frames %s and %s: tf error msg=%s", f1.c_str(), f2.c_str(), error_msg.c_str());
         return false;
     }
     //if the frames don't exist yet, the wait will just return true, in which case we have to double-wait here.
@@ -165,6 +179,7 @@ int ROSFunctions::equalPoses(const geometry_msgs::PoseStamped& p1, const geometr
     tf::quaternionMsgToEigen(rel.orientation, ori);
 
     double angleDist = convenience_math_functions::MathFunctions::capToPI(Eigen::AngleAxisd(ori).angle());
+    //double angleDist = convenience_math_functions::MathFunctions::quatAngularDistance(p1.pose.orientation, p2.pose.orientation);
 
     //ROS_INFO("Rotation is %f %f %f %f",transform.getRotation().x(),transform.getRotation().y(),transform.getRotation().z(),transform.getRotation().w());
     //ROS_INFO("ROSFunctions::equalPoses Distances: %f / %f",dist.norm(),angleDist);
@@ -472,11 +487,13 @@ int ROSFunctions::equalJointPositions(const sensor_msgs::JointState& j1,
         return -2;
     }
 
+    // ROS_INFO_STREAM("Input1: "<<std::endl<<j1<<" Input2: "<<std::endl<<j2<<" intersection "<<std::endl<<intersectJS);
+
     // intersectJS is not initialized with values in j1.
     // because j2 was required to be subset of j1 in intersectJointState(),
     // now intersectJS and j2 have to be of same size, and have same order of
     // joints as j1.
-    if (!intersectJS.position.size() != j2.position.size())
+    if (intersectJS.position.size() != j2.position.size())
     {
         return -3;
     }
