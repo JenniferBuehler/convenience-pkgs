@@ -51,6 +51,7 @@ include_directories(
 ## Declare a C++ library
 add_library(convenience_ros_functions
   src/ROSFunctions.cpp
+  src/RobotInfo.cpp
 )
 
 ## Add cmake target dependencies of the library
