@@ -77,7 +77,8 @@ sensor_msgs::JointState RobotInfo::getCurrentJointState(ros::NodeHandle& n){
 
 
 
-sensor_msgs::MultiDOFJointState RobotInfo::getVirtualJointState(const geometry_msgs::PoseStamped& robotPose, const std::string& virtualJointName, const std::string& frame_id) {
+sensor_msgs::MultiDOFJointState RobotInfo::getVirtualJointState(const geometry_msgs::PoseStamped& robotPose,
+    const std::string& virtualJointName, const std::string& frame_id) {
 
     //ROS_INFO_STREAM("Getting virtual joint state for robot pose "<<robotPose);
 

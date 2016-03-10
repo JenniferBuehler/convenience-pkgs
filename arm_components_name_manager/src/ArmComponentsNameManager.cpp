@@ -404,9 +404,11 @@ const std::vector<float>& ArmComponentsNameManager::getGripperJointsInitPose() c
 }*/
 
 
-void ArmComponentsNameManager::copyToJointState(sensor_msgs::JointState& js, int mode, const std::vector<float> * init_poses) const
+void ArmComponentsNameManager::copyToJointState(sensor_msgs::JointState& js, int mode, const std::vector<float> * init_vals, int copyData, bool resetAll) const
 {
     // 0 = all joints; 1 = only arm joints; 2 = only gripper joints.
+        
+    js.name.clear();
     int size = -1;
     if (mode == 0)
     {
@@ -423,20 +425,29 @@ void ArmComponentsNameManager::copyToJointState(sensor_msgs::JointState& js, int
         size = gripper_joints.size();
         js.name = gripper_joints;
     }
-
-    js.position.resize(size, 0);
-    js.velocity.resize(size, 0);
-    js.effort.resize(size, 0);
-    if (init_poses)
+       
+    if (resetAll)
     {
+        js.position.resize(size, 0);
+        js.velocity.resize(size, 0);
+        js.effort.resize(size, 0);
+    }
+    if (init_vals)
+    {
+        if (copyData == 0) js.position.resize(size, 0);
+        else if (copyData == 1) js.velocity.resize(size, 0);
+        else if (copyData == 2) js.effort.resize(size, 0);
         for (int i = 0; i < size; ++i)
         {
-            js.position[i] = (*init_poses)[i];
+            if (copyData == 0) js.position[i] = (*init_vals)[i];
+            else if (copyData == 1) js.velocity[i] = (*init_vals)[i];
+            else if (copyData == 2) js.effort[i] = (*init_vals)[i];
         }
     }
 }
 
-bool ArmComponentsNameManager::extractFromJointState(const sensor_msgs::JointState& js, int mode, std::vector<float>& angles) const
+bool ArmComponentsNameManager::extractFromJointState(const sensor_msgs::JointState& js,
+    int mode, std::vector<float>& data, int extractData) const
 {
     if ((mode < 0) || mode > 2)
     {
@@ -473,12 +484,12 @@ bool ArmComponentsNameManager::extractFromJointState(const sensor_msgs::JointSta
     {
         startIt = 0;
         endIt = arm_joints.size();
-    } else {  // get gripper
+    } else if (mode == 2) {  // get gripper
         startIt = arm_joints.size(); 
         endIt = startIt + gripper_joints.size();
     }
 
-    angles.clear();
+    data.clear();
     for (int i = startIt; i < endIt; ++i)
     {
         if (joint_indices[i] < 0)
@@ -498,9 +509,23 @@ bool ArmComponentsNameManager::extractFromJointState(const sensor_msgs::JointSta
                 <<js.position.size()<<" idx="<<joint_indices[i] << " i = "<<i);
             return false;
         }
-        angles.push_back(js.position[joint_indices[i]]);
+        if (extractData == 0) data.push_back(js.position[joint_indices[i]]);
+        else if (extractData == 1) data.push_back(js.velocity[joint_indices[i]]);
+        else if (extractData == 2) data.push_back(js.effort[joint_indices[i]]);
     }
     return true;
+}
+    
+bool ArmComponentsNameManager::extractFromJointState(const sensor_msgs::JointState& js, int mode, sensor_msgs::JointState& result) const
+{
+    std::vector<float> pos, vel, eff;
+    if (!extractFromJointState(js,mode,pos,0)) return false;
+    if (!extractFromJointState(js,mode,vel,1)) return false;
+    if (!extractFromJointState(js,mode,eff,2)) return false;
+    copyToJointState(result, mode, &pos, 0, false);
+    copyToJointState(result, mode, &vel, 1, false);
+    copyToJointState(result, mode, &eff, 2, false);
+    return true; 
 }
 
 

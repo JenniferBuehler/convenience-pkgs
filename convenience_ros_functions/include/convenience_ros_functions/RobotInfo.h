@@ -43,18 +43,21 @@ class RobotInfo {
     sensor_msgs::JointState getCurrentJointState(const std::string& topicName, ros::NodeHandle& n);
 
     /**
-     * MoveIt likes to have the MultiDOFJointState in the frame specified at configuration
+     * Transforms the \e robotPose into \e frameID and then constructs a sensor_msgs::MultiDOFJointState
+     * using this transformed pose.
+     *
+     * Background info: MoveIt likes to have the MultiDOFJointState in the frame specified at configuration
      * time (e.g. odom) and seems to have trouble converting it. So do it here.
      * If this frame changes, pass it into "frame_id" parameter.
      */
     static sensor_msgs::MultiDOFJointState getVirtualJointState(const geometry_msgs::PoseStamped& robotPose,
-        const std::string& virtualJointName, const std::string& frame_id); 
+        const std::string& virtualJointName, const std::string& frameID); 
 
     /**
      * get the current robot pose, and get it as a MulitDOFJointState, transformed to the most recent transform available in frame_id
      */
     sensor_msgs::MultiDOFJointState getCurrentVirtualJointState(const std::string& poseTopicName,
-        ros::NodeHandle& n, const std::string& virtualJointName, const std::string& frame_id); 
+        ros::NodeHandle& n, const std::string& virtualJointName, const std::string& frameID); 
 
     private:
     typedef architecture_binding::mutex mutex;

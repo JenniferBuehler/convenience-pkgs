@@ -209,23 +209,29 @@ public:
 //                        const std::vector<float> * init_poses = NULL) const;
 
     /**
-     * Copy names (and optionally poses) into the JointState \e js.
-     * Joint names as to be used in the default order (e.g. for JointState messsages)
+     * Copy names (and optionally data fields) into the JointState \e js.
+     * Joint names as to be used in the default order (e.g. for JointState messsages). Existing joint state names
+     * will be cleared before being re-initialized.
      * \param mode which names to copy int \js. 0 = all joints (first arm, then gripper joints will be
      *      inserted in \e angles); 1 = only arm joints; 2 = only gripper joints.
-     * \param init_poses (optional) if specified, you can set the target angles of the
-     * joint positions here. The order has to be according to \e mode.
+     * \param init_vals (optional) if specified, you can set the target values of the
+     *  joint positions here. The order has to be according to \e mode.
+     * \param copyData specifies which type of data \e init_vals contains: if 0, positions. If 1, velocities. If 2, efforts.
+     * \param resetOthers set this to true to reset all positon, velocities and efforts and just resize them to correct size and
+     *      initialize them to 0. If \e init_vals is set, this will still override the 0 init values. 
      */
-    void copyToJointState(sensor_msgs::JointState& js, int mode, const std::vector<float> * init_poses) const;
+    void copyToJointState(sensor_msgs::JointState& js, int mode, const std::vector<float> * init_vals, int copyData, bool resetAll) const;
 
 
     /**
-     * Extracts all arm and/or gripper angles in the order used in this manager from a JointState message.
+     * Extracts all arm and/or gripper values (according to \e extractData), in the standardized order, from a JointState message.
      * \param mode which data to extract. 0 = all joints (first arm, then gripper joints will be
      *      inserted in \e angles); 1 = only arm joints; 2 = only gripper joints.
+     * \param extractData if 0, extract positions. If 1, extract velocities. If 2, extract efforts.
      * \retval false extraction not successfull because not all data was available in joint state \e js
      */
-    bool extractFromJointState(const sensor_msgs::JointState& js, int mode, std::vector<float>& angles) const;
+    bool extractFromJointState(const sensor_msgs::JointState& js, int mode, std::vector<float>& data, int extractData) const;
+    bool extractFromJointState(const sensor_msgs::JointState& js, int mode, sensor_msgs::JointState& result) const;
 
     /**
      * Helper function to find out the order of joints given in a names vector.
