@@ -249,6 +249,13 @@ public:
      */
     int getJointIndices(const std::vector<std::string>& joint_names, std::vector<int>& idx) const;
 
+    /**
+     * Like other getJointIndices(), but allows to get joint indices for a particular group, according to \e mode.
+     * \param mode if 0, get indices for both arm and gripper joints. If 1, get only arm joints. If 2, get only gripper joints.
+     * \return true if all the indicess according to \e mode could be determined.
+     */
+    bool getJointIndices(const std::vector<std::string>& joint_names, std::vector<int>& idx, int mode) const;
+
     int numArmJoints() const;
     int numGripperJoints() const;
 

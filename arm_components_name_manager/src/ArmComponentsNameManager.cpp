@@ -528,6 +528,42 @@ bool ArmComponentsNameManager::extractFromJointState(const sensor_msgs::JointSta
     return true; 
 }
 
+bool ArmComponentsNameManager::getJointIndices(const std::vector<std::string>& joint_names, std::vector<int>& idx, int mode) const
+{
+    if (mode == 0) return getJointIndices(joint_names, idx) >= 0;
+    
+    // mode has to be 1 or 2
+    if ((mode !=1) && (mode != 2))
+    {
+        ROS_ERROR("Consistency: getJointIndices() must be called with mode 0, 1 or 2");
+        return false;
+    }
+
+    // get only subset of the indices. Get all indices first,
+    // and then shrink the returning indices accordingly.
+
+    std::vector<int> allIdx;
+    int allRet = getJointIndices(joint_names, allIdx);
+    if (allRet < 0) return false;
+    if (allRet == mode)
+    {
+        idx = allIdx;
+        return true;
+    }
+
+    idx.clear();
+    int numArmJoints = getArmJoints().size();
+    if (mode == 1)
+    {   // only arm
+        idx.insert(idx.begin(),allIdx.begin(), allIdx.begin()+numArmJoints);
+    }
+    else
+    {   // only fingers
+        idx.insert(idx.begin(),allIdx.begin()+numArmJoints, allIdx.end());
+    }
+    return true;
+    
+}
 
 int ArmComponentsNameManager::getJointIndices(const std::vector<std::string>& joint_names, std::vector<int>& idx) const
 {

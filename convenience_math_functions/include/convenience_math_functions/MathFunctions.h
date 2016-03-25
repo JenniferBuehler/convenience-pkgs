@@ -50,7 +50,6 @@ public:
      */
     static double limitsToTwoPI(const double value, const double lowLimit, const double highLimit);
 
-
     /**
      * Returns shortest distace between two angles (in rad), specifically
      * when going from \e _f2 to \e _f1

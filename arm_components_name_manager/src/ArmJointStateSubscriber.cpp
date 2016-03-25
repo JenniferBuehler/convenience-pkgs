@@ -67,7 +67,7 @@ bool ArmJointStateSubscriber::waitForUpdate(float timeout, float checkStepTime) 
     float time_waited=0;
     while ((getLastUpdateTime() < start_time) && ((timeout < 0) || (time_waited < timeout)))
     {
-        ROS_INFO("Waiting...");
+        ROS_INFO("ArmJointStateSubscriber: Waiting...");
         // spin once so that callback() may still be called by the subscriber
         // in case the node is not running in multi-threaded mode.
         ros::spinOnce();

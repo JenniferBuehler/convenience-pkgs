@@ -28,8 +28,6 @@ double MathFunctions::limitsToTwoPI(const double value, const double lowLimit, c
 }
 
 
-
-
 Eigen::Quaterniond MathFunctions::getRotationFromTo(const Eigen::Quaterniond& q1, const Eigen::Quaterniond& q2)
 {
     Eigen::Quaterniond ret = q2 * q1.inverse();

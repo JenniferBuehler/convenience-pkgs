@@ -10,7 +10,7 @@ namespace convenience_ros_functions
 {
 
 /**
- * Helper class with an action server and usually required fields already defined.
+ * \brief Helper class with an action server and commonly required fields already defined.
  * Can be derived to provide a new action server.
  *
  * As a template parameter, pass the action message type.
