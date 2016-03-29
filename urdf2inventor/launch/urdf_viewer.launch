@@ -1,0 +1,6 @@
+<launch>
+    <arg name="urdf_file" default="$(find jaco_description)/urdf/jaco_robot.urdf"/>
+
+	<node name="urdf_viewer" pkg="urdf2inventor" type="urdf_viewer" respawn="false"
+        output="screen" args="$(arg urdf_file)"/>
+</launch>

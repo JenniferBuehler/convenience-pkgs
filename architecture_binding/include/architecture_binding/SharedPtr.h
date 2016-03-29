@@ -50,6 +50,8 @@ struct shared_ptr
     typedef boost::shared_ptr<T> type;
 };
 
+#define architecture_binding_ns boost
+
 #else  // use C++11 std
 
 /*template <class T>
@@ -64,7 +66,7 @@ struct shared_ptr
     typedef std::shared_ptr<T> type;
 };
 
-
+#define architecture_binding_ns std
 
 #endif
 
