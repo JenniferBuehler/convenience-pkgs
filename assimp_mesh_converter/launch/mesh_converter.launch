@@ -1,0 +1,9 @@
+<launch>
+    <arg name="in"/>
+    <arg name="out"/>
+    <arg name="out_format"/>
+    <arg name="in_format" default=""/>
+
+	<node name="assimp_mesh_converter" pkg="assimp_mesh_converter" type="mesh_converter" respawn="false"
+        output="screen" args="$(arg in) $(arg out_format) $(arg out) $(arg in_format)"/>
+</launch>

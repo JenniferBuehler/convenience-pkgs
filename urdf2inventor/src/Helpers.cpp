@@ -91,6 +91,14 @@ bool urdf2inventor::helpers::fileExists(const char* file)
     return boost::filesystem::exists(file);
 }
 
+std::string urdf2inventor::helpers::fileExtension(const char* file)
+{
+    boost::filesystem::path dPath(file);
+    std::string extension = dPath.extension().string();
+    extension.erase(0,1);
+    return extension;
+}
+
 bool urdf2inventor::helpers::directoryExists(const char* dPath)
 {
     // using boost

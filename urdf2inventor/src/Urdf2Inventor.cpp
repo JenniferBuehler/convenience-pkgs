@@ -42,41 +42,14 @@
 // Filename for temporary output file
 #define TEMP_STDOUT "/tmp/redirectedStdOut"
 
+// directory where to dump temporary mesh
+// files. Only required to read collada files.
+#define TEMP_MESH_DIR "/tmp/tempMeshes"
+
 using urdf2inventor::Urdf2Inventor;
 
 std::string Urdf2Inventor::OUTPUT_EXTENSION = ".iv";
 std::string Urdf2Inventor::MESH_OUTPUT_DIRECTORY_NAME = "iv";
-
-/*
-void Urdf2Inventor::toGlobalCoordinates(const EigenTransform& transform,
-                                       const Eigen::Vector3d& input, Eigen::Vector3d& output)
-{
-    EigenTransform wtInv = transform.inverse();
-    Eigen::Vector3d res = wtInv * input;    // transform the rotation axis in world coordinate frame
-    //  ROS_INFO_STREAM("inverse transform: "<<wtInv<<" applied to "<<input<<" = "<<res);
-    output = res;
-}
-
-
-void Urdf2Inventor::getGlobalCoordinates(const JointPtr& joint,
-                                        const EigenTransform& parentWorldTransform,
-                                        Eigen::Vector3d& rotationAxis, Eigen::Vector3d& position)
-{
-    Eigen::Vector3d rotAxis = getRotationAxis(joint);
-    EigenTransform jointTransform = getTransform(joint);
-
-    EigenTransform jointWorldTransform = parentWorldTransform * jointTransform;
-
-    EigenTransform wtInv = jointWorldTransform.inverse();
-
-    // ROS_INFO_STREAM("Joint world transform: "<<jointWorldTransform);
-
-    rotationAxis = wtInv.rotation() * rotAxis;   //  transform the rotation axis in world coordinate frame
-    rotationAxis.normalize();
-
-    position = jointWorldTransform.translation();
-}
-*/
 
 
 std::string Urdf2Inventor::getRootLinkName() const
@@ -128,152 +101,6 @@ void Urdf2Inventor::scaleTranslation(LinkPtr& link, double scale_factor)
     setTransform(vTrans, link->inertial->origin);
 }
 
-/*bool Urdf2Inventor::applyTransform(JointPtr& joint, const EigenTransform& trans, bool preMult)
-{
-    EigenTransform vTrans = getTransform(joint);
-    if (preMult) vTrans = trans * vTrans;
-    else vTrans = vTrans * trans;
-    setTransform(vTrans, joint);
-}
-
-void Urdf2Inventor::applyTransform(LinkPtr& link, const EigenTransform& trans, bool preMult)
-{
-    // ROS_INFO("applying transform to link %s",link->name.c_str());
-
-    for (std::vector<VisualPtr >::iterator vit = link->visual_array.begin();
-            vit != link->visual_array.end(); ++vit)
-    {
-        VisualPtr visual = *vit;
-        EigenTransform vTrans = getTransform(visual->origin);
-        // ROS_INFO_STREAM("a visual for link"<<link->name<<" with transform "<<vTrans);
-        if (preMult) vTrans = trans * vTrans;
-        else vTrans = vTrans * trans;
-        setTransform(vTrans, visual->origin);
-    }
-
-
-    for (std::vector<CollisionPtr >::iterator cit = link->collision_array.begin();
-            cit != link->collision_array.end(); ++cit)
-    {
-        CollisionPtr coll = *cit;
-        EigenTransform vTrans = getTransform(coll->origin);
-        if (preMult) vTrans = trans * vTrans;
-        else vTrans = vTrans * trans;
-        setTransform(vTrans, coll->origin);
-    }
-
-    EigenTransform vTrans = getTransform(link->inertial->origin);
-    if (preMult) vTrans = trans * vTrans;
-    else vTrans = vTrans * trans;
-    setTransform(vTrans, link->inertial->origin);
-
-    std::map<std::string, std::vector<Contact_Ptr> >::iterator lCnt = linkContacts.find(link->name);
-    if (lCnt != linkContacts.end())
-    {
-        for (std::vector<Contact_Ptr>::iterator it = lCnt->second.begin(); it != lCnt->second.end(); ++it)
-        {
-            Contact_Ptr c = *it;
-            EigenTransform t = EigenTransform::Identity();
-            t.translate(c->loc);
-            t.rotate(c->ori);
-            // ROS_INFO_STREAM("////// Applying transform "<<trans<<" to "<<c->loc);
-            if (preMult) t = trans * t;
-            else         t = t * trans;
-            c->loc = t.translation();
-            c->ori = Eigen::Quaterniond(t.rotation());
-            c->norm = trans.rotation() * c->norm;
-        }
-    }
-}
-
-bool equalAxes(const Eigen::Vector3d& z1, const Eigen::Vector3d& z2)
-{
-    double dot = z1.dot(z2);
-    return (std::fabs(dot - 1.0)) < U2G_EPSILON;
-    // float alpha = acos(z1.dot(z2));
-    // return (std::fabs(alpha) < U2G_EPSILON);
-}
-
-
-bool Urdf2Inventor::jointTransformForAxis(const urdf::Joint& joint,
-        const Eigen::Vector3d& axis, Eigen::Quaterniond& rotation)
-{
-    Eigen::Vector3d rotAxis(joint.axis.x, joint.axis.y, joint.axis.z);
-    rotAxis.normalize();
-    if (equalAxes(rotAxis, axis)) return false;
-
-    rotation = Eigen::Quaterniond::FromTwoVectors(rotAxis, axis);
-    // ROS_WARN_STREAM("z alignment: "<<rotation);
-    return true;
-}
-
-bool Urdf2Inventor::allRotationsToAxis(const std::string& fromLinkName, const Eigen::Vector3d& axis)
-{
-    LinkPtr from_link;
-    this->robot.getLink(fromLinkName, from_link);
-    if (!from_link.get())
-    {
-        ROS_ERROR("Link %s does not exist", fromLinkName.c_str());
-        return false;
-    }
-
-    for (std::vector<JointPtr>::iterator pj = from_link->child_joints.begin();
-            pj != from_link->child_joints.end(); pj++)
-    {
-        if (!allRotationsToAxis(*pj, axis))
-        {
-            ROS_ERROR("Aborting recursion.");
-            return false;
-        }
-    }
-    return true;
-}
-
-bool Urdf2Inventor::allRotationsToAxis(JointPtr& joint, const Eigen::Vector3d& axis)
-{
-    LinkPtr childLink;
-    this->robot.getLink(joint->child_link_name, childLink);
-
-    if (!childLink.get())
-    {
-        ROS_ERROR("All joints must have a child link!");
-        return false;
-    }
-    Eigen::Quaterniond alignAxis;
-    if (jointTransformForAxis(*joint, axis, alignAxis))
-    {
-        // ROS_INFO("Transforming z for joint %s",joint->name.c_str());
-        applyTransform(joint, EigenTransform(alignAxis), false);
-        // the link has to receive the inverse transorm, so it stays at the original position
-        Eigen::Quaterniond alignAxisInv = alignAxis.inverse();
-        applyTransform(childLink, EigenTransform(alignAxisInv), true);
-
-        // now, we have to fix the child joint's (1st order child joints) transform
-        // to correct for this transformation.
-        for (std::vector<JointPtr>::iterator pj = childLink->child_joints.begin();
-                pj != childLink->child_joints.end(); pj++)
-        {
-            applyTransform(*pj, EigenTransform(alignAxisInv), true);
-        }
-
-        // finally, set the rotation axis to the target
-        joint->axis.x = axis.x();
-        joint->axis.y = axis.y();
-        joint->axis.z = axis.z();
-    }
-    // recurse
-    for (std::vector<JointPtr>::iterator pj = childLink->child_joints.begin();
-            pj != childLink->child_joints.end(); pj++)
-    {
-        if (!allRotationsToAxis(*pj, axis))
-        {
-            ROS_ERROR("Aborting recursion.");
-            return false;
-        }
-    }
-    return true;
-}
-*/
 
 bool Urdf2Inventor::scale()
 {
@@ -436,29 +263,6 @@ Urdf2Inventor::ConversionResultPtr Urdf2Inventor::convert(const std::string& roo
     res->success = true;
     return res;
 }
-
-/*void Urdf2Inventor::getLimits(const urdf::Joint& j, float& min, float& max)
-{
-    min = j.limits->lower;
-    max = j.limits->upper;
-    if (negateJointMoves)
-    {
-        min = -min;
-        max = -max;
-    }
-}
-
-void Urdf2Inventor::getJointMoves(const urdf::Joint& j, float& velocity, float& effort)
-{
-    velocity = j.limits->velocity;
-    effort = j.limits->effort;
-    if (negateJointMoves)
-    {
-        velocity = -velocity;
-        effort = -effort;
-    }
-}
-*/
 
 bool Urdf2Inventor::printModel(const std::string& fromLink)
 {
@@ -796,92 +600,6 @@ Urdf2Inventor::LinkPtr Urdf2Inventor::joinFixedLinksOnThis(LinkPtr& link)
     return parentLink;
 }
 
-/*int Urdf2Inventor::addJointLink(RecursionParamsPtr& p)
-{
-    boost::shared_ptr<OrderedJointsRecursionParams> param =
-        boost::dynamic_pointer_cast<OrderedJointsRecursionParams>(p);
-    if (!param.get())
-    {
-        ROS_ERROR("Wrong recursion parameter type");
-        return -1;
-    }
-
-    // ROS_INFO("At link %s", parent->name.c_str());
-    if (param->parent->child_joints.empty())
-    {
-        ROS_ERROR("If links are connected, there must be at least one joint");
-        return -1;
-    }
-    if (!param->link->parent_joint.get())
-    {
-        ROS_ERROR("NULL parent joint");
-        return -1;
-    }
-    if (param->parent->child_joints.size() > 1)
-    {
-        if (!param->allowSplits)
-        {
-            ROS_ERROR("Splitting point at %s!", param->parent->name.c_str());
-            return -1;
-        }
-        // this is a splitting point, we have to add support for this
-    }
-
-    if (param->onlyActive && !isActive(param->link->parent_joint))
-    {
-        // ROS_INFO("No type");
-        return 1;
-    }
-
-
-    // ROS_INFO("Adding %s",link->parent_joint->name.c_str());
-    param->dependencyOrderedJoints.push_back(param->link->parent_joint);
-    return 1;
-}
-
-bool Urdf2Inventor::getDependencyOrderedJoints(std::vector<JointPtr>& result,
-        const JointPtr& from_joint, bool allowSplits, bool onlyActive)
-{
-    LinkPtr childLink;
-    this->robot.getLink(from_joint->child_link_name, childLink);
-    if (!childLink.get())
-    {
-        ROS_ERROR("Child link %s not found", from_joint->child_link_name.c_str());
-        return false;
-    }
-    if (!getDependencyOrderedJoints(result, childLink, allowSplits, onlyActive))
-    {
-        ROS_ERROR("Could not get ordered joints for %s", from_joint->child_link_name.c_str());
-        return false;
-    }
-    if (!onlyActive || isActive(from_joint))
-    {
-        result.insert(result.begin(), from_joint);
-    }
-    return true;
-}
-
-bool Urdf2Inventor::getDependencyOrderedJoints(std::vector<JointPtr>& result, const LinkPtr& from_link,
-        bool allowSplits, bool onlyActive)
-{
-    if (!allowSplits && (from_link->child_joints.size() > 1))
-    {
-        ROS_ERROR("Splitting point at %s!", from_link->name.c_str());
-        return false;
-    }
-    OrderedJointsRecursionParams * p = new OrderedJointsRecursionParams(allowSplits, onlyActive);
-    RecursionParamsPtr rp(p);
-    if (this->traverseTreeTopDown(from_link, boost::bind(&Urdf2Inventor::addJointLink, this, _1), rp) < 0)
-    {
-        ROS_ERROR("Could not add depenency order");
-        p->dependencyOrderedJoints.clear();
-        return false;
-    }
-
-    result = p->dependencyOrderedJoints;
-    return true;
-}
-*/
 
 std::vector<Urdf2Inventor::JointPtr> Urdf2Inventor::getChain(const LinkPtr& from_link, const LinkPtr& to_link) const
 {
@@ -925,8 +643,27 @@ std::string Urdf2Inventor::getStdOutRedirectFile()
     return TEMP_STDOUT;
 }
 
-
 SoNode * Urdf2Inventor::convertMeshFile(const std::string& filename, double scale_factor)
+{
+    std::string fileExt = urdf2inventor::helpers::fileExtension(filename.c_str());
+    ROS_INFO_STREAM("Filename extension: "<<fileExt);
+    SoNode * result=NULL;
+    if (fileExt == "dae")
+    {
+        ROS_INFO_STREAM("Need to convert mesh file "<<filename<<" to temporary stl first");
+        ROS_ERROR("This still needs to be implemented! See a possibility in package assimp_mesh_converter");
+        // could write temporary meshes to TEMP_MESH_DIR
+    }
+    else
+    {
+        ROS_INFO_STREAM("Converting mesh "<<filename);
+        result = convertMeshFileIvcon(filename,scale_factor);
+        ROS_INFO("Converted.");
+    } 
+    return result;
+}
+
+SoNode * Urdf2Inventor::convertMeshFileIvcon(const std::string& filename, double scale_factor)
 {
     // int ssize=10000;
     // char bigOutBuf[ssize];
@@ -1071,6 +808,11 @@ SoNode * Urdf2Inventor::getAllVisuals(const LinkPtr link, double scale_factor, b
             std::string meshFilename = urdf2inventor::helpers::packagePathToAbsolute(mesh->filename);
 
             SoNode * somesh = convertMeshFile(meshFilename, scale_factor);
+            if (!somesh)
+            {
+                ROS_ERROR("Mesh could not be read");
+                return NULL;
+            }
             std::stringstream str;
             str << "_visual_" << i << "_" << linkName;
             somesh->setName(str.str().c_str());
@@ -1122,44 +864,6 @@ Urdf2Inventor::JointPtr Urdf2Inventor::getJoint(const std::string& name)
     else ptr = this->robot.joints_.find(name)->second;
     return ptr;
 }
-
-/*int Urdf2Inventor::getChildJoint(const JointPtr& joint, JointPtr& child)
-{
-    LinkPtr childLink = getChildLink(joint);
-    if (!childLink.get())
-    {
-        ROS_ERROR("Consistency: all joints must have child links");
-        return -2;
-    }
-    if (childLink->child_joints.size() > 1)
-    {
-        return -1;
-    }
-    if (childLink->child_joints.empty())
-    {
-        // this is the end link, and we've defined the end frame to be at the same location as the last joint,
-        // so no rotation should be needed?
-        return 0;
-    }
-    // there must be only one joint
-    child = childLink->child_joints.front();
-    return 1;
-}
-
-Urdf2Inventor::LinkPtr Urdf2Inventor::getChildLink(const JointPtr& joint)
-{
-    LinkPtr childLink;
-    this->robot.getLink(joint->child_link_name, childLink);
-    return childLink;
-}
-
-Urdf2Inventor::JointPtr Urdf2Inventor::getParentJoint(const JointPtr& joint)
-{
-    LinkConstPtr parentLink = this->robot.getLink(joint->parent_link_name);
-    if (!parentLink.get()) return JointPtr();
-    return parentLink->parent_joint;
-}
-*/
 
 void Urdf2Inventor::setTransform(const EigenTransform& t, urdf::Pose& p)
 {
@@ -1263,13 +967,22 @@ SoNode * Urdf2Inventor::loadAndGetAsInventor(const std::string& urdfFilename, co
 SoNode * Urdf2Inventor::getAsInventor(const LinkPtr& from_link, bool useScaleFactor)
 {
     SoNode * allVisuals = getAllVisuals(from_link, useScaleFactor ? scaleFactor : 1.0, useScaleFactor);
-
+    if (!allVisuals)
+    {
+        ROS_ERROR("Could not get visuals");
+        return NULL;
+    }
     for (std::vector<JointPtr>::const_iterator pj = from_link->child_joints.begin();
             pj != from_link->child_joints.end(); pj++)
     {
         LinkPtr childLink;
         this->robot.getLink((*pj)->child_link_name, childLink);
         SoNode * childNode = getAsInventor(childLink, useScaleFactor);
+        if (!childNode)
+        {
+            ROS_ERROR_STREAM("Could not get child node for "<<childLink->name);
+            return NULL;
+        }
         EigenTransform jointTransform = getTransform(*pj);
         if (useScaleFactor) scaleTranslation(jointTransform, scaleFactor);
 
@@ -1418,15 +1131,7 @@ Urdf2Inventor::ConversionResultPtr Urdf2Inventor::loadAndConvert(const std::stri
     }
     // ROS_INFO("00000000000000000000000");
     // p.printModel(rootLink);
-/*
 
-    Eigen::Vector3d z(0, 0, 1);
-    if (!allRotationsToAxis(rootLink, z))
-    {
-        ROS_ERROR("Failed");
-        return result;
-    }
-*/
     result = convert(rootLink, material);
     if (!result->success)
     {

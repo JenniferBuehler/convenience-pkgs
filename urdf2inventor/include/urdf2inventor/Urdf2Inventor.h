@@ -91,12 +91,6 @@ public:
     }
 
     /**
-     * Transform the URDF such that all rotation axises (in the joint's local reference frame) are this axis
-     */
-    // bool allRotationsToAxis(const std::string& fromLinkName, const Eigen::Vector3d& axis);
-
-
-    /**
      * Reads the URDF file from the filename into \e xml_string. Does not change
      * anything in the Urdf2Inventor object.
      */
@@ -302,18 +296,7 @@ protected:
      * scale the model and the meshes
      */
     bool scale();
-    
-    /**
-     * returns minimum / maximum limits of this joint
-     */
-    // void getLimits(const urdf::Joint& j, float& min, float& max);
-
-    /**
-     * returns velocity and effort of this joint
-     */
-    // void getJointMoves(const urdf::Joint& j, float& velocity, float& effort);
-
-
+   
 private:
     /**
      * \brief Includes parameters to be passed on in recursion when generating meshes.
@@ -351,33 +334,6 @@ private:
     };
 
     /**
-     * \brief Recursion data for getting a list of joints, ordered by dependency (no joint depending on others
-     * will come before them in the result vector)
-     */
-    /*class OrderedJointsRecursionParams: public Urdf2Inventor::RecursionParams
-    {
-    public:
-        typedef architecture_binding::shared_ptr<OrderedJointsRecursionParams>::type Ptr;
-        OrderedJointsRecursionParams(): RecursionParams() {}
-        OrderedJointsRecursionParams(bool _allowSplits, bool _onlyActive):
-            allowSplits(_allowSplits),
-            onlyActive(_onlyActive) {}
-        OrderedJointsRecursionParams(const OrderedJointsRecursionParams& o):
-            RecursionParams(o) {}
-        virtual ~OrderedJointsRecursionParams() {}
-
-        // Result set
-        std::vector<Urdf2Inventor::JointPtr> dependencyOrderedJoints;
-
-        // Allow splits, i.e. one link has several child joints. if this is set to false,
-        // the recursive operation will fail at splitting points.
-        bool allowSplits;
-
-        // Only add joints to the result which are active.
-        bool onlyActive;
-    };*/
-
-    /**
      * scales the translation part of the joint transform by the given factor
      */
     bool scaleTranslation(JointPtr& joint, double scale_factor);
@@ -386,31 +342,6 @@ private:
      * scales the translation part of the origins of visuals/collisions/inertial by the given factor
      */
     void scaleTranslation(LinkPtr& link, double scale_factor);
-
-
-    /**
-     * Applies the transformation on the joint transform
-     * \param scaleTransform set to true if the urdf's transforms are to be scaled (using scaleFactor) before applying the transform
-     */
-    // bool applyTransform(JointPtr& joint, const EigenTransform& trans, bool preMult);
-
-    /**
-     * Applies the transformation on the link's visuals, collisions and intertial.
-     * \param scaleTransform set to true if the urdf's transforms are to be scaled (using scaleFactor) before applying the transform
-     */
-    // void applyTransform(LinkPtr& link, const EigenTransform& trans, bool preMult);
-
-    /**
-     * \return true if this joint needs a transformation to align its rotation axis with the given axis.
-     * In this case the rotation parameter contains the necessary rotation.
-     */
-    // bool jointTransformForAxis(const urdf::Joint& joint, const Eigen::Vector3d& axis, Eigen::Quaterniond& rotation);
-
-    /**
-     * Recursively re-arranges all joint-transforms (starting from joint) and visual/collision/intertial
-     * rotations such that all joints rotate around z-axis
-     */
-    // bool allRotationsToAxis(JointPtr& joint, const Eigen::Vector3d& axis);
 
     /**
      * Function to be called during recursion incurred in convertMeshes()
@@ -457,24 +388,6 @@ private:
      */
     bool joinFixedLinks(LinkPtr& from_link);
 
-
-    // Function for recursive getDependencyOrderedJoints
-    //int addJointLink(RecursionParamsPtr& p);
-
-    /**
-     * Returns all joints starting from from_joint (including from_joint) within the tree. This is obtained by depth-first traversal,
-     * so all joints in the result won't depend on any joints further back in the result set.
-     */
-    //bool getDependencyOrderedJoints(std::vector<JointPtr>& result, const JointPtr& from_joint,
-    //                                bool allowSplits = true, bool onlyActive = true);
-
-    /**
-     * Returns all joints down from from_link within the tree. This is obtained by depth-first traversal,
-     * so all joints in the result won't depend on any joints further back in the result set.
-     */
-    //bool getDependencyOrderedJoints(std::vector<JointPtr>& result, const LinkPtr& from_link,
-   //                                 bool allowSplits = true, bool onlyActive = true);
-
     /**
      * Returns all joints between from_link and to_link
      */
@@ -485,6 +398,11 @@ private:
      * The model may be scaled at the same time using scale_factor.
      */
     SoNode * convertMeshFile(const std::string& filename, double scale_factor);
+
+    /**
+     * Uses the ivcon package to conver to inventor file.
+     */
+    SoNode * convertMeshFileIvcon(const std::string& filename, double scale_factor);
 
     /**
      * Get the mesh from link, scale it up by scale_factor, and pack it into an SoNode which is also respects the
@@ -517,59 +435,8 @@ private:
                (joint->type == urdf::Joint::PRISMATIC);
     }
 
-    // Returns if this is a revoluting joint in the URDF description
-/*    inline bool isRevoluting(const JointPtr& joint) const
-    {
-        return (joint->type == urdf::Joint::REVOLUTE) || (joint->type == urdf::Joint::CONTINUOUS);
-    }
-
-    // Returns if this is a continuous joint in the URDF description
-    inline bool isContinuous(const JointPtr& joint) const
-    {
-        return (joint->type == urdf::Joint::CONTINUOUS);
-    }
-
-    // Returns if this is a prismatic joint in the URDF description
-    inline bool isPrismatic(const JointPtr& joint) const
-    {
-        return (joint->type == urdf::Joint::PRISMATIC);
-    }
-*/
-
-    // Returns the joint's rotation axis as Eigen Vector
-    /*inline Eigen::Vector3d getRotationAxis(const JointPtr& j)
-    {
-        return Eigen::Vector3d(j->axis.x, j->axis.y, j->axis.z);
-    }*/
-
     JointPtr getJoint(const std::string& name);
     LinkPtr getLink(const std::string& name);
-
-    /**
-     * \retval -2 on error
-     * \retval -1 if the joint has multiple children
-     * \retval 0 if the joint has no child joints (it's an end effector joint),
-     * \retval 1 if a child joint is returned in parameter "child"
-     */
-    /*int getChildJoint(const JointPtr& joint, JointPtr& child);
-    LinkPtr getChildLink(const JointPtr& joint);
-    JointPtr getParentJoint(const JointPtr& joint);
-    */
-
-    // Transforms a vector (input) within a local coordinate system (given by transform) into world coordinates
-    /*void toGlobalCoordinates(const EigenTransform& transform,
-                             const Eigen::Vector3d& input, Eigen::Vector3d& output);
-    */
-
-    /**
-     * Returns the joint transform in global coordinates, given that the world transform for the parent
-     * joint is parentWorldTransform.
-     * Both rotation axis and joint position are returned in global coordinates.
-     */
-    /*void getGlobalCoordinates(const JointPtr& joint,
-                              const EigenTransform& parentWorldTransform,
-                              Eigen::Vector3d& rotationAxis, Eigen::Vector3d& position);
-*/
 
     // Scales up the translation part of the transform t by the given factor
     void scaleTranslation(EigenTransform& t, double scale_factor);
