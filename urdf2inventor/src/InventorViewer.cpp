@@ -17,6 +17,7 @@
 **/
 
 #include <urdf2inventor/InventorViewer.h>
+#include <urdf2inventor/Helpers.h>
 
 #include <Inventor/SoDB.h>  // for file reading
 #include <Inventor/SoInput.h>   // for file reading
@@ -187,6 +188,35 @@ bool InventorViewer::computeCorrectFaceNormal(const SoPickedPoint * pick, bool c
 
 
 
+
+
+
+/**
+ * string which is used for sscanf to extract following information form an SoNode:
+ * the name of the link, and the nubmer of the visual. This sscanf should get first an int (visual number), then a string (link name).
+ * it should fail for all nodes except those which contain the visual mesh.
+ */
+#define VISUAL_SCANF "_visual_%i_%s"
+
+SoNode * InventorViewer::getLinkDesc(const SoPath * path, std::string& linkName, int& visualNum)
+{
+    for (unsigned int i = path->getLength() - 1; i >= 0;  --i)
+    {
+        SoNode * n = path->getNode(i);
+        std::string name = n->getName().getString();
+        // ROS_INFO("Pick path len %s\n",name.c_str());
+        char ln[1000];
+        int num;
+        if (sscanf(name.c_str(), VISUAL_SCANF, &num, ln) < 2) continue;
+        // ROS_INFO("num: %i rest: %s\n",num,ln);
+        linkName = ln; //urdf2inventor::helpers::getFilename(ln); // take only the name after the last '/'
+        visualNum = num;
+        return n;
+    }
+    return NULL;
+}
+
+
 void InventorViewer::mouseBtnCB(void *userData, SoEventCallback *_pEvent)
 {
     InventorViewer * obj = static_cast<InventorViewer*>(userData);
@@ -215,6 +245,20 @@ void InventorViewer::mouseBtnCB(void *userData, SoEventCallback *_pEvent)
         if (pPickedPt != NULL)
         {
             obj->onClickModel(pPickedPt);
+
+            // see if a URDF link was clicked:
+            SoPath *pPickPath = pPickedPt->getPath();
+            std::string linkName;
+            int visualNum;
+            SoNode * linkNode = getLinkDesc(pPickPath, linkName, visualNum);
+            if (!linkNode)
+            {
+                ROS_INFO("Clicked on something other than a link");
+                return;
+            }
+            float x, y, z;
+            pPickedPt->getObjectPoint(linkNode).getValue(x, y, z);
+            ROS_INFO_STREAM("Clicked on "<<linkName<<", at pos "<<x<<", "<<y<<", "<<z); 
         }
     }
 }

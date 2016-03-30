@@ -50,6 +50,15 @@ bool urdf2inventor::FileIO<MeshFormat>::writeMeshFiles(const std::map<std::strin
     {
         std::stringstream outFilename;
         outFilename << outputMeshDir << "/" << mit->first << meshOutputExtension;
+
+        std::string pathToFile=urdf2inventor::helpers::getPath(outFilename.str().c_str()); 
+        //ROS_INFO_STREAM("Directory of path "<<outFilename.str()<<": "<<pathToFile);
+        if (!pathToFile.empty() &&
+            !urdf2inventor::helpers::makeDirectoryIfNeeded(pathToFile.c_str()))
+        {
+            ROS_ERROR_STREAM("Could not make directory "<<pathToFile);
+        }
+
         if (!urdf2inventor::helpers::writeToFile(mit->second, outFilename.str()))
         {
             ROS_ERROR("Could not write file %s", outFilename.str().c_str());

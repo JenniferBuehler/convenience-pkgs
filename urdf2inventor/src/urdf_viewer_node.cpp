@@ -25,21 +25,55 @@ using urdf2inventor::Urdf2Inventor;
 
 int main(int argc, char *argv[])
 {
-    if (argc < 3)
+    if (argc < 2)
     {
-        std::cout << "Usage: " << argv[0] << " <input-file>.urdf" << std::endl;
-        return 1;
+        std::cout << "Usage: " << argv[0] << " <input-file> [--iv] [<from-link>]" << std::endl;
+        std::cout <<" If --iv is specified, the file is assumed to be an inventor file, otherwise a URDF file." <<std::endl;
+        std::cout <<" if <from-link> is specified (only supported if not using --iv), the URDF is converted from this link down." <<std::endl;
+        return 0;
     }
 
+    bool isURDF = true;
+
     std::string inputFile = argv[1];
+    std::string fromLink;
+ 
+    if (argc > 2)
+    {
+        std::string arg(argv[2]);
+        if (arg=="--iv") isURDF=false;
+        else if (arg!="root") fromLink=arg;
+    } 
 
+    /**
+     * TODO: For some reason I haven't yet further investigated, view.init() has to be called after
+     * loadAndGetAsInventor(), or it won't work. Find out why, and fix it.
+     */
+
+    bool success = true;
     Urdf2Inventor converter;
-    SoNode * node = converter.loadAndGetAsInventor(inputFile);
-
     InventorViewer view;
-    view.init("WindowName");
-    view.loadModel(node);
-    view.runViewer();
+    if (isURDF)
+    {
+        std::cout<<"Converting model from file "<<inputFile<<"..."<<std::endl;
+        if (!fromLink.empty()) std::cout<<"Staring from link "<<fromLink<<std::endl;
+        SoNode * node = converter.loadAndGetAsInventor(inputFile, fromLink);
+        if (!node)
+        {
+            std::cout<<"ERROR: Could not get inventor node"<<std::endl;
+            success = false;
+        }else{
+            std::cout<<"Model converted, now loading into viewer..."<<std::endl;
+            view.init("WindowName");
+            view.loadModel(node);
+        }
+    }
+    else
+    {
+        view.init("WindowName");
+        view.loadModel(inputFile);
+    }
+    if (success)  view.runViewer();
 
     bool deleteOutputRedirect = true;
     converter.cleanup(deleteOutputRedirect);

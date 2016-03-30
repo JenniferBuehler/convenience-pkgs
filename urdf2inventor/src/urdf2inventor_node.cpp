@@ -72,17 +72,16 @@ int main(int argc, char** argv)
     if (!cResult->success)
     {
         ROS_ERROR("Failed to process.");
-        return 1;
+        return 0;
     }
 
     ROS_INFO("Conversion done. Now writing files.");
 
     urdf2inventor::FileIO<urdf2inventor::Urdf2Inventor::MeshFormat> fileIO(outputDir);
-
     if (!fileIO.write(cResult))
     {
         ROS_ERROR("Could not write files");
-        return 1;
+        return 0;
     }
 
     std::stringstream wholeFile;
@@ -91,7 +90,7 @@ int main(int argc, char** argv)
     if (!converter.writeAsInventor(wholeFile.str()))
     {
         ROS_ERROR("Could not write whole robot file");
-        return 1;
+        return 0;
     }
 
     ROS_INFO("Cleaning up...");

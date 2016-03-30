@@ -49,6 +49,12 @@ namespace urdf2inventor
 /**
  * \brief This class provides functions to transform a robot described in URDF to the inventor format.
  *
+ * Careful: So far, only meshes with .stl and .obj extensions have been tested. There were problems
+ * with some .stl meshes and ivcon however (it idles forever, crashes, or even freezes the screen).
+ * So far, the best solution is to convert all meshes to .obj beforehand. Package assimp_mesh_converter
+ * can be used to do this. At some time (hopefully soon) this will be automated here, and dependency to
+ * package ivcon should be removed.
+ * 
  * TODO: This should be separated in 2 different hierarchies, one to handle the URDF traversal
  * to apply all sorts of functions, and another to do the operations such as mesh conversion and model scaling.
  *
@@ -181,6 +187,12 @@ public:
     bool printModel(const std::string& fromLink);
 
     /**
+     * Returns all joint names in depth-frist search order starting from \e fromLink (or from root if
+     * \e fromLink is empty)
+     */
+    bool getJointNames(const std::string& fromLink, const bool skipFixed, std::vector<std::string>& result);
+
+    /**
      * Cleans up all temporary files written to disk.
      */
     void cleanup(bool deleteOutputRedirect = true);
@@ -263,6 +275,39 @@ protected:
 
         double factor;
     };
+
+
+    /**
+     * \brief Collects string values into a vector
+     */
+    class StringVectorRecursionParams: public Urdf2Inventor::RecursionParams
+    {
+    public:
+        typedef architecture_binding::shared_ptr<StringVectorRecursionParams>::type Ptr;
+        StringVectorRecursionParams(const bool _skipFixed):
+            RecursionParams(),
+            skipFixed(_skipFixed) {}
+/*        StringVectorRecursionParams(Urdf2Inventor::LinkPtr& _parent,
+                              Urdf2Inventor::LinkPtr& _link, int _level,
+                              std::vector<std::string> _names, const bool _skipFixed):
+            RecursionParams(_parent, _link, _level),
+            names(_names),
+            skipFixed(_skipFixed) {}*/
+        StringVectorRecursionParams(const StringVectorRecursionParams& o):
+            RecursionParams(o),
+            names(o.names),
+            skipFixed(o.skipFixed) {}
+        virtual ~StringVectorRecursionParams() {}
+        // skip the fixed joints and collect only movable ones
+        bool skipFixed;
+        std::vector<std::string> names;
+    };
+    
+
+    /**
+     * Helper function for getJointNames(const std::string&, std::vector<std::string>&).
+     */
+    int getJointNames(RecursionParamsPtr& p);
 
     /**
      * Convert all meshes starting from fromLinkName into the inventor format, and store them in the given

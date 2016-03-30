@@ -91,6 +91,19 @@ bool urdf2inventor::helpers::fileExists(const char* file)
     return boost::filesystem::exists(file);
 }
 
+std::string urdf2inventor::helpers::getFilename(const char* file)
+{
+    boost::filesystem::path dPath(file);
+    return dPath.filename().string();
+}
+
+std::string urdf2inventor::helpers::getFilenameWithoutExtension(const char* file)
+{
+    boost::filesystem::path dPath(file);
+    return dPath.stem().string();
+}
+
+
 std::string urdf2inventor::helpers::fileExtension(const char* file)
 {
     boost::filesystem::path dPath(file);
@@ -105,8 +118,15 @@ bool urdf2inventor::helpers::directoryExists(const char* dPath)
     return boost::filesystem::exists(dPath);
 }
 
+std::string urdf2inventor::helpers::getPath(const char * file)
+{
+    boost::filesystem::path dPath(file);
+    return dPath.parent_path().string(); 
+}
+
 bool urdf2inventor::helpers::makeDirectoryIfNeeded(const char * dPath)
 {
+    if (directoryExists(dPath)) return true;
     try
     {
         boost::filesystem::path dir(dPath);

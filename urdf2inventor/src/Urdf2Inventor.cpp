@@ -42,6 +42,8 @@
 // Filename for temporary output file
 #define TEMP_STDOUT "/tmp/redirectedStdOut"
 
+#define REDIRECT_STDOUT
+
 // directory where to dump temporary mesh
 // files. Only required to read collada files.
 #define TEMP_MESH_DIR "/tmp/tempMeshes"
@@ -342,6 +344,68 @@ int Urdf2Inventor::printLink(RecursionParamsPtr& p)
 }
 
 
+bool Urdf2Inventor::getJointNames(const std::string& fromLink, const bool skipFixed, std::vector<std::string>& result)
+{
+    std::string rootLink=fromLink;
+    if (rootLink.empty()){
+        rootLink = getRootLinkName();
+    }
+
+    // get root link
+    LinkPtr root_link;
+    this->robot.getLink(rootLink, root_link);
+    if (!root_link)
+    {
+        ROS_ERROR("no root link %s", this->robot.getName().c_str());
+        return false;
+    }
+
+    ROS_INFO("Get joint names starting from link: %s", root_link->name.c_str());
+
+    // go through entire tree
+    StringVectorRecursionParams * stringParams=new StringVectorRecursionParams(skipFixed);
+    RecursionParamsPtr p(stringParams);
+    bool success = (this->traverseTreeTopDown(root_link, boost::bind(&Urdf2Inventor::getJointNames, this, _1), p) >= 0);
+    if (success)
+    {
+        result=stringParams->names;
+    }
+    return success;
+}
+
+
+int Urdf2Inventor::getJointNames(RecursionParamsPtr& p)
+{
+    StringVectorRecursionParams::Ptr param = architecture_binding_ns::dynamic_pointer_cast<StringVectorRecursionParams>(p);
+    if (!param.get())
+    {
+        ROS_ERROR("Wrong recursion parameter type");
+        return -1;
+    }
+
+    LinkPtr parent = p->parent;
+    LinkPtr link = p->link;
+    unsigned int level = p->level;
+
+    // only return parent joints starting from first recursion level,
+    // because we want only the joints in-between the starting linke
+    // and the end of the chain.
+    //if (level <=1 ) return 1;
+
+    std::string pjoint;
+    if (link->parent_joint.get())
+    {
+        pjoint = link->parent_joint->name;
+        if (!param->skipFixed || isActive(link->parent_joint))
+            param->names.push_back(pjoint);
+    }
+    //ROS_INFO("Information about %s: parent joint %s (recursion level %i)", link->name.c_str(), pjoint.c_str(), level);
+    return 1;
+}
+
+
+
+
 int Urdf2Inventor::traverseTreeTopDown(const LinkPtr& link, boost::function< int(RecursionParamsPtr&)> link_cb,
                                       RecursionParamsPtr& params, unsigned int level)
 {
@@ -439,7 +503,7 @@ bool Urdf2Inventor::hasFixedJoints(LinkPtr& from_link)
     RecursionParamsPtr p(new RecursionParams(empty, l, 0));
     if ((checkActiveJoints(p) < 0) ||
             (this->traverseTreeTopDown(from_link,
-                                       boost::bind(&Urdf2Inventor::checkActiveJoints, this, _1), p) < 0))
+             boost::bind(&Urdf2Inventor::checkActiveJoints, this, _1), p) < 0))
     {
         return true;
     }
@@ -646,19 +710,20 @@ std::string Urdf2Inventor::getStdOutRedirectFile()
 SoNode * Urdf2Inventor::convertMeshFile(const std::string& filename, double scale_factor)
 {
     std::string fileExt = urdf2inventor::helpers::fileExtension(filename.c_str());
-    ROS_INFO_STREAM("Filename extension: "<<fileExt);
+//    ROS_INFO_STREAM("Filename extension: "<<fileExt);
     SoNode * result=NULL;
     if (fileExt == "dae")
     {
         ROS_INFO_STREAM("Need to convert mesh file "<<filename<<" to temporary stl first");
         ROS_ERROR("This still needs to be implemented! See a possibility in package assimp_mesh_converter");
         // could write temporary meshes to TEMP_MESH_DIR
+        // after conversion, we need to 
     }
     else
     {
-        ROS_INFO_STREAM("Converting mesh "<<filename);
+        // ROS_INFO_STREAM("Converting mesh "<<filename);
         result = convertMeshFileIvcon(filename,scale_factor);
-        ROS_INFO("Converted.");
+        // ROS_INFO("Converted.");
     } 
     return result;
 }
@@ -667,23 +732,27 @@ SoNode * Urdf2Inventor::convertMeshFileIvcon(const std::string& filename, double
 {
     // int ssize=10000;
     // char bigOutBuf[ssize];
+#ifdef REDIRECT_STDOUT
     urdf2inventor::helpers::redirectStdOut(getStdOutRedirectFile().c_str());
-
+#endif
     // first, convert file to inventor. ivconv writes to file only so we have to
     // temporarily write it to file and then read it again
     IVCONV::SCALE_FACTOR = scale_factor;
     IVCONV ivconv;
+    ROS_INFO_STREAM("IVCONV reading "<<filename);
     if (!ivconv.read(filename))
     {
         ROS_ERROR("Can't read mesh file %s", filename.c_str());
         return NULL;
     }
+    ROS_INFO_STREAM("IVCONV writing "<<filename);
 
     if (!ivconv.write(TMP_FILE_IV))
     {
         ROS_ERROR("Can't write mesh file %s", TMP_FILE_IV);
         return NULL;
     }
+    ROS_INFO_STREAM("IVCONV finished reading "<<filename);
 
     SoInput in;
     SoNode  *scene = NULL;
@@ -692,8 +761,10 @@ SoNode * Urdf2Inventor::convertMeshFileIvcon(const std::string& filename, double
 
     in.closeFile();
 
+#ifdef REDIRECT_STDOUT
     urdf2inventor::helpers::resetStdOut();
     // ROS_INFO("We got %s",bigOutBuf);
+#endif
     return scene;
 }
 
@@ -960,6 +1031,18 @@ SoNode * Urdf2Inventor::loadAndGetAsInventor(const std::string& urdfFilename, co
     if (rootLink.empty()){
         rootLink = getRootLinkName();
     }
+
+
+    std::vector<std::string> jointNames;
+    if (!getJointNames(rootLink, true, jointNames))
+    {
+        ROS_WARN("Could not retrieve joint names to print on screen");
+    }
+    else
+    {
+        ROS_INFO_STREAM("Joint names starting from "<<rootLink<<":");
+        for (int i=0; i<jointNames.size(); ++i) ROS_INFO_STREAM(jointNames[i]);
+    }
     return getAsInventor(rootLink, useScaleFactor);
 }
 
@@ -987,6 +1070,7 @@ SoNode * Urdf2Inventor::getAsInventor(const LinkPtr& from_link, bool useScaleFac
         if (useScaleFactor) scaleTranslation(jointTransform, scaleFactor);
 
         // ROS_WARN_STREAM("Transform joint "<<(*pj)->name<<": "<<jointTransform);
+        //ROS_INFO_STREAM("Adding sub node for "<<childLink->name);
 
         allVisuals = addSubNode(childNode, allVisuals, jointTransform);
     }
@@ -1001,7 +1085,7 @@ SoNode * Urdf2Inventor::getAsInventor(const std::string& fromLink, bool useScale
     if (rootLink.empty()){
         rootLink = getRootLinkName();
     }
-
+//    ROS_INFO_STREAM("Getting as inventor starting from '"<<rootLink<<"'");
     LinkPtr from_link;
     this->robot.getLink(rootLink, from_link);
     if (!from_link.get())

@@ -59,7 +59,13 @@ extern std::string fileExtension(const char* file);
 
 extern bool directoryExists(const char* dPath);
 
+extern std::string getPath(const char * file);
+
 extern bool fileExists(const char* file);
+
+std::string getFilename(const char* file);
+
+std::string getFilenameWithoutExtension(const char* file);
 
 extern bool makeDirectoryIfNeeded(const char * dPath);
 

@@ -65,7 +65,12 @@ public:
         faces_ccw(o.faces_ccw) {}
     ~InventorViewer() {}
 
-    // Initialize Inventor and Qt
+
+    /**
+     * Initialize Inventor and Qt
+     * TODO: For some reason I haven't yet further investigated, this has to be called **after**
+     * functions as Urdf2Inventor::loadAndGetAsInventor(), or it won't work. Find out why, and fix it.
+     */
     void init(const char * windowName = "InventorViewer");
 
     /**
@@ -106,6 +111,11 @@ protected:
      * Calculates the correct face normal of the pick point.
      */
     static bool computeCorrectFaceNormal(const SoPickedPoint * pick, bool ccw_face, Eigen::Vector3d& normal);
+
+    /**
+     * Helper function which can be used to determine a URDF link name from a picked path
+     */
+    static SoNode * getLinkDesc(const SoPath * path, std::string& linkName, int& visualNum);
 
     SoQtExaminerViewer * getViewer() { return viewer; }
    
