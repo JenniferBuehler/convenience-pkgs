@@ -45,10 +45,31 @@
 
 using urdf2inventor::viewer::InventorViewer;
 
+InventorViewer::InventorViewer(bool _faces_ccw):
+    root(NULL), viewWindow(NULL), viewer(NULL),
+    faces_ccw(_faces_ccw) {}
+
+
+InventorViewer::InventorViewer(const InventorViewer& o):
+    root(o.root), viewWindow(o.viewWindow), viewer(o.viewer),
+    faces_ccw(o.faces_ccw) {}
+InventorViewer::~InventorViewer() {
+//    SoQt::done();
+   if (viewer)
+    {
+        delete viewer;
+    }
+//    root->unref();
+}
 
 
 void InventorViewer::init(const char * windowName)
 {
+    if (viewWindow)
+    {
+        ROS_ERROR("InventorViewer already initialized");
+        return;
+    }
     viewWindow = SoQt::init(windowName);
     viewer = new SoQtExaminerViewer(viewWindow);
     root = new SoSelection();

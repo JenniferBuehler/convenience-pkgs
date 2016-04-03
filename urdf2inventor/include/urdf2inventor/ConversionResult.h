@@ -27,6 +27,36 @@ namespace urdf2inventor
 {
 
 /**
+ * Parameters for one conversion.
+ *
+ * \author Jennifer Buehler
+ * \date March 2016
+ */
+class ConversionParameters
+{
+public:
+    explicit ConversionParameters(const std::string& _rootLinkName,
+        const std::string& _material):
+        rootLinkName(_rootLinkName),
+        material(_material){}
+    ConversionParameters(const ConversionParameters& o):
+        rootLinkName(o.rootLinkName),
+        material(o.material) {}
+
+    virtual ~ConversionParameters() {}
+
+    // root link where the conversion starts from
+    std::string rootLinkName;
+
+    // material for the meshes
+    std::string material;
+private:
+    ConversionParameters(){}
+};
+
+
+
+/**
  * \brief Encapsulates all result fields for a conversion
  * \author Jennifer Buehler
  * \date November 2015

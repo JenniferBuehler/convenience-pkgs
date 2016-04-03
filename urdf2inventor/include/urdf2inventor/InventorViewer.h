@@ -56,14 +56,10 @@ public:
     /**
      * \param _faces_ccw faces are to be treated as counter-clockwise. Needed for normal calculations.
      */
-    explicit InventorViewer(bool _faces_ccw = true):
-        root(NULL), viewWindow(NULL), viewer(NULL),
-        faces_ccw(_faces_ccw) {}
+    explicit InventorViewer(bool _faces_ccw = true);
 
-    InventorViewer(const InventorViewer& o):
-        root(o.root), viewWindow(o.viewWindow), viewer(o.viewer),
-        faces_ccw(o.faces_ccw) {}
-    ~InventorViewer() {}
+    InventorViewer(const InventorViewer& o);
+    ~InventorViewer();
 
 
     /**

@@ -81,6 +81,15 @@ void urdf2inventor::helpers::redirectStdOut(const char * toFile)
 
 
 
+void urdf2inventor::helpers::findAndReplace(const std::string& newStr, const std::string& oldStr, const std::string& in, std::string& out){
+  size_t pos = 0;
+  out=in;
+  while((pos = out.find(oldStr, pos)) != std::string::npos){
+     out = out.replace(pos, oldStr.length(), newStr);
+     pos += newStr.length();
+  }
+}
+
 void urdf2inventor::helpers::deleteFile(const char* file)
 {
     std::remove(file);

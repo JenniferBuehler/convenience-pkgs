@@ -63,7 +63,7 @@ namespace urdf2inventor
  */
 class Urdf2Inventor
 {
-private:
+protected:
     typedef Eigen::Transform<double, 3, Eigen::Affine> EigenTransform;
 
 public:
@@ -76,6 +76,8 @@ public:
     typedef std::string MeshFormat;
     typedef ConversionResult<MeshFormat> ConversionResultT;
     typedef architecture_binding::shared_ptr<ConversionResultT>::type ConversionResultPtr;
+    
+    typedef architecture_binding::shared_ptr<ConversionParameters>::type ConversionParametersPtr;
 
     // output file format to convert the meshes to
     static std::string OUTPUT_EXTENSION;
@@ -152,29 +154,33 @@ public:
     bool writeAsInventor(const std::string& outputFilename,  const std::string& fromLink = "", bool useScaleFactor = true);
 
     /**
-     * Convenience method: loads the URDF file, calls joinFixedLinks() and then converts the URDF file to
+     * Convenience method: loads the URDF file, then joins fixed links (only if \e joinFixed) and then converts the URDF file to
      * inventor mesh files by calling convert(). 
      * IMPORTANT: This will also load the model, so any other URDF model previously loaded will be overwritten.
-     *
+     */
+    ConversionResultPtr loadAndConvert(const std::string& urdfFilename,
+        bool joinFixed,
+        const ConversionParametersPtr& params);
+    /**
      * \param rootLink if empty string, the root link in the URDF is going to be used. Otherwise, a link
      *      name can be set here which will convert the model starting from this link name.
      */
-    ConversionResultPtr loadAndConvert(const std::string& urdfFilename,
-        const std::string& rootLink = "",
-        const std::string& material = "plastic");
+    ConversionParametersPtr getBasicConversionParams(const std::string& rootLink="", const std::string& material="plastic")
+    {
+        return ConversionParametersPtr(new ConversionParameters(rootLink,material));
+    }
 
     /**
-     * Method which does the conversion from URDF to Inventor. This scales the model (using the scale factor specified
-     * in the constructor, unless the model was already scaled before), then converts the individual links mesh files,
-     * and produces all output files. To save an inventor file of the *whole* robot, use writeAsInventor() instead.
+     * Method which does the conversion from URDF to Inventor. This
+     * fist calls the implementation-specific preConvert(),
+     * then scales the model (using the scale factor specified
+     * in the constructor, unless the model was already scaled before), then converts the individual links mesh files
+     * by calling convertMeshes(), and finally calls implementation-specific postConvert().
+     * To save an inventor file of the *whole* robot, use writeAsInventor() instead.
      *
-     * \param robotName name of the robot, mainly used to create folder names and file names
-     * \param palmLinkName the name of the palm link in the URDF file
-     * \param fingerRootJoints the roots of all fingers in the hand, i.e. the beginningsn of all GraspIt! chains.
-     * \param material the material to use in the converted format
+     * \param params parameters of the conversion
      */
-    ConversionResultPtr convert(const std::string& rootLink,
-                              const std::string& material="plastic");
+    virtual ConversionResultPtr convert(const ConversionParametersPtr& params);
 
     /**
      * Prints the structure of the URDF to standard out
@@ -302,7 +308,63 @@ protected:
         bool skipFixed;
         std::vector<std::string> names;
     };
-    
+
+
+     /**
+     * \brief Includes parameters to be passed on in recursion when generating meshes.
+     */
+    class MeshConvertRecursionParams: public FactorRecursionParams
+    {
+    public:
+        typedef architecture_binding::shared_ptr<MeshConvertRecursionParams>::type Ptr;
+        MeshConvertRecursionParams(): FactorRecursionParams() {}
+
+        /**
+         * \param material the material to use in the converted mesh
+         */
+        MeshConvertRecursionParams(Urdf2Inventor::LinkPtr& _parent,
+                                   Urdf2Inventor::LinkPtr& _link,
+                                   int _level,
+                                   double _scale_factor,
+                                   const std::string& _material):
+            FactorRecursionParams(_parent, _link, _level, _scale_factor),
+            material(_material) {}
+
+        MeshConvertRecursionParams(double _scale_factor, const std::string _material):
+            FactorRecursionParams(_scale_factor),
+            material(_material) {}
+        MeshConvertRecursionParams(const MeshConvertRecursionParams& o):
+            FactorRecursionParams(o),
+            material(o.material),
+            resultMeshes(o.resultMeshes) {}
+        virtual ~MeshConvertRecursionParams() {}
+
+        std::string material;
+
+        // the resulting meshes (inventor files), indexed by the link name
+        std::map<std::string, MeshFormat> resultMeshes;
+    };
+   
+    /**
+     * Method called by convert() which can be implemented by subclasses to return a different type of ConversionResult
+     * and do any operations required *before* the main body of convert() is being done.
+     * See also postConvert().
+     * \param rootLink the conversion is to be done starting from this link.
+     * \return NULL/invalid shared ptr if pre-conversion failed.
+     */ 
+    virtual ConversionResultPtr preConvert(const ConversionParametersPtr& params); 
+
+    /**
+     * Method called by convert() which can be implemented by subclasses to do any operations
+     * required *after* the main body of convert() has been done.
+     * See also preConvert().
+     * \param rootLink the conversion is to be done starting from this link.
+     * \param result the conversion result so far. This is the object which has been returned by preConvert(),
+     *      with changes applied by the main body of convert() applied to the base class fields.
+     * \return Has to be the same as \e result, with possible changes applied.
+     *      Set ConversionResult::success to false to indicate failure, or to true to indicate success.
+     */ 
+    virtual ConversionResultPtr postConvert(const ConversionParametersPtr& params, ConversionResultPtr& result); 
 
     /**
      * Helper function for getJointNames(const std::string&, std::vector<std::string>&).
@@ -342,41 +404,63 @@ protected:
      */
     bool scale();
    
-private:
-    /**
-     * \brief Includes parameters to be passed on in recursion when generating meshes.
-     */
-    class MeshConvertRecursionParams: public FactorRecursionParams
+
+    // Returns if this is an active joint in the URDF description
+    inline bool isActive(const JointPtr& joint) const
     {
-    public:
-        typedef architecture_binding::shared_ptr<MeshConvertRecursionParams>::type Ptr;
-        MeshConvertRecursionParams(): FactorRecursionParams() {}
+        return (joint->type == urdf::Joint::REVOLUTE) ||
+               (joint->type == urdf::Joint::CONTINUOUS) ||
+               (joint->type == urdf::Joint::PRISMATIC);
+    }
 
-        /**
-         * \param material the material to use in the converted mesh
-         */
-        MeshConvertRecursionParams(Urdf2Inventor::LinkPtr& _parent,
-                                   Urdf2Inventor::LinkPtr& _link,
-                                   int _level,
-                                   double _scale_factor,
-                                   const std::string& _material):
-            FactorRecursionParams(_parent, _link, _level, _scale_factor),
-            material(_material) {}
+    JointPtr getJoint(const std::string& name);
+    LinkPtr getLink(const std::string& name);
 
-        MeshConvertRecursionParams(double _scale_factor, const std::string _material):
-            FactorRecursionParams(_scale_factor),
-            material(_material) {}
-        MeshConvertRecursionParams(const MeshConvertRecursionParams& o):
-            FactorRecursionParams(o),
-            material(o.material),
-            resultMeshes(o.resultMeshes) {}
-        virtual ~MeshConvertRecursionParams() {}
+    // Scales up the translation part of the transform t by the given factor
+    void scaleTranslation(EigenTransform& t, double scale_factor);
 
-        std::string material;
+    void setTransform(const EigenTransform& t, urdf::Pose& p);
+    void setTransform(const EigenTransform& t, JointPtr& joint);
 
-        // the resulting meshes (inventor files), indexed by the link name
-        std::map<std::string, MeshFormat> resultMeshes;
-    };
+    // Get joint transform to parent
+    EigenTransform getTransform(const urdf::Pose& p);
+
+    // Get joint transform to parent
+    inline EigenTransform getTransform(const JointPtr& joint)
+    {
+        return getTransform(joint->parent_to_joint_origin_transform);
+    }
+
+    // Get transform to parent link (transform of link's parent joint)
+    inline EigenTransform getTransform(const LinkPtr& link)
+    {
+        return getTransform(link->parent_joint);
+    }
+
+    Eigen::Matrix4d getTransformMatrix(const LinkPtr& from_link,  const LinkPtr& to_link);
+
+    inline EigenTransform getTransform(const LinkPtr& from_link,  const LinkPtr& to_link)
+    {
+        return EigenTransform(getTransformMatrix(from_link, to_link));
+    }
+
+    EigenTransform getTransform(const LinkPtr& from_link,  const JointPtr& to_joint);
+
+    const urdf::Model& getRobot() const
+    {
+        return robot;
+    }
+    
+    // returns true if there are any fixed joints down from from_link
+    bool hasFixedJoints(LinkPtr& from_link);
+
+    inline float getScaleFactor() const
+    {
+        return scaleFactor;
+    }
+    
+
+private:
 
     /**
      * scales the translation part of the joint transform by the given factor
@@ -415,8 +499,6 @@ private:
      */
     int checkActiveJoints(RecursionParamsPtr& p);
 
-    // returns true if there are any fixed joints down from from_link
-    bool hasFixedJoints(LinkPtr& from_link);
 
     /**
      * Helper: If the parent joint of this link is fixed, it will be removed, and this link's visual will be
@@ -471,47 +553,6 @@ private:
      * returns the SoSeparator containing parent with the child.
      */
     SoSeparator * addSubNode(SoNode * addAsChild, SoNode* parent, SoTransform * trans);
-
-    // Returns if this is an active joint in the URDF description
-    inline bool isActive(const JointPtr& joint) const
-    {
-        return (joint->type == urdf::Joint::REVOLUTE) ||
-               (joint->type == urdf::Joint::CONTINUOUS) ||
-               (joint->type == urdf::Joint::PRISMATIC);
-    }
-
-    JointPtr getJoint(const std::string& name);
-    LinkPtr getLink(const std::string& name);
-
-    // Scales up the translation part of the transform t by the given factor
-    void scaleTranslation(EigenTransform& t, double scale_factor);
-
-    void setTransform(const EigenTransform& t, urdf::Pose& p);
-    void setTransform(const EigenTransform& t, JointPtr& joint);
-
-    // Get joint transform to parent
-    EigenTransform getTransform(const urdf::Pose& p);
-
-    // Get joint transform to parent
-    inline EigenTransform getTransform(const JointPtr& joint)
-    {
-        return getTransform(joint->parent_to_joint_origin_transform);
-    }
-
-    // Get transform to parent link (transform of link's parent joint)
-    inline EigenTransform getTransform(const LinkPtr& link)
-    {
-        return getTransform(link->parent_joint);
-    }
-
-    Eigen::Matrix4d getTransformMatrix(const LinkPtr& from_link,  const LinkPtr& to_link);
-
-    inline EigenTransform getTransform(const LinkPtr& from_link,  const LinkPtr& to_link)
-    {
-        return EigenTransform(getTransformMatrix(from_link, to_link));
-    }
-
-    EigenTransform getTransform(const LinkPtr& from_link,  const JointPtr& to_joint);
 
     /**
      * Recursive function which returns an inventor node for all links down from (and including) from_link.

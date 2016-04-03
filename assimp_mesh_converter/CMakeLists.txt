@@ -136,10 +136,6 @@ add_executable(mesh_converter src/converter.cpp)
 ## same as for the library above
 add_dependencies(mesh_converter ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-message("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
-message("ies: ${ASSIMP_LIBRARIES}")
-message("y: ${ASSIMP_LIBRARY}")
-
 ## Specify libraries to link a library or executable target against
 target_link_libraries(mesh_converter
   ${catkin_LIBRARIES}

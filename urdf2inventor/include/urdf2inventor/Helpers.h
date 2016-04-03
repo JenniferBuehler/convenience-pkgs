@@ -72,6 +72,8 @@ extern bool makeDirectoryIfNeeded(const char * dPath);
 extern bool writeToFile(const std::string& content, const std::string& filename);
 extern void deleteFile(const char* file);
 
+extern void findAndReplace(const std::string& newStr, const std::string& oldStr, const std::string& in, std::string& out);
+
 // transforms a path specification in the form package://<package-name>/<path> to an absolute path on the computer
 extern std::string packagePathToAbsolute(std::string& packagePath);
 

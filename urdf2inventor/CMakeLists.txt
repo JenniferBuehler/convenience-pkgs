@@ -58,7 +58,7 @@ endif (BUILD_IVCON)
 ## catkin specific configuration ##
 ###################################
 
-set (CATKIN_DEPEND_PKGS roscpp urdf eigen_conversions)
+set (CATKIN_DEPEND_PKGS roscpp urdf eigen_conversions architecture_binding)
 if (NOT BUILD_IVCON)
     set (CATKIN_DEPEND_PKGS ${CATKIN_DEPEND_PKGS} ivcon)
 endif (NOT BUILD_IVCON)

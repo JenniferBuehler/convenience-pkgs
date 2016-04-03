@@ -164,7 +164,10 @@ int main(int argc, char ** argv)
         {
             ROS_ERROR("Could not convert");
         }
-        ROS_INFO_STREAM("Conversion successful. Output written to "<<output);
+        else
+        {
+            ROS_INFO_STREAM("Conversion successful. Output written to "<<output);
+        }
         return 0;
     }
     

@@ -36,6 +36,7 @@
 #include <vector>
 #include <set>
 #include <fstream>
+#include <algorithm>
 
 #define RAD_TO_DEG 180/M_PI
 
@@ -175,7 +176,6 @@ bool Urdf2Inventor::scaleModelRecursive(double scale_factor)
 
 int Urdf2Inventor::convertMesh(RecursionParamsPtr& p)
 {
-    // ROS_INFO("convert mesh for %s",link->name.c_str());
 
     MeshConvertRecursionParams::Ptr param = architecture_binding_ns::dynamic_pointer_cast<MeshConvertRecursionParams>(p);
     if (!param.get())
@@ -185,6 +185,8 @@ int Urdf2Inventor::convertMesh(RecursionParamsPtr& p)
     }
 
     LinkPtr link = param->link;
+    
+    ROS_INFO("Convert mesh for link '%s'",link->name.c_str());
 
     SoNode * allVisuals = getAllVisuals(link, param->factor);
 
@@ -215,11 +217,16 @@ bool Urdf2Inventor::convertMeshes(const std::string& fromLinkName,
                                  const std::string& material,
                                  std::map<std::string, MeshFormat>& meshes)
 {
+    std::string rootLink=fromLinkName;
+    if (rootLink.empty()){
+        rootLink = getRootLinkName();
+    }
+    
     LinkPtr from_link;
-    this->robot.getLink(fromLinkName, from_link);
+    this->robot.getLink(rootLink, from_link);
     if (!from_link.get())
     {
-        ROS_ERROR("Link %s does not exist", fromLinkName.c_str());
+        ROS_ERROR("Link %s does not exist", rootLink.c_str());
         return false;
     }
 
@@ -244,11 +251,30 @@ bool Urdf2Inventor::convertMeshes(const std::string& fromLinkName,
     return ret;
 }
 
-Urdf2Inventor::ConversionResultPtr Urdf2Inventor::convert(const std::string& rootLink,
-        const std::string& material)
+Urdf2Inventor::ConversionResultPtr Urdf2Inventor::preConvert(const ConversionParametersPtr& params)
 {
     ConversionResultPtr res(new ConversionResultT(OUTPUT_EXTENSION, MESH_OUTPUT_DIRECTORY_NAME));
+    res->success=false;
+    return res;
+}
+
+Urdf2Inventor::ConversionResultPtr Urdf2Inventor::postConvert(const ConversionParametersPtr& params, ConversionResultPtr& result)
+{
+    result->success = true;
+    return result;
+}
+
+
+Urdf2Inventor::ConversionResultPtr Urdf2Inventor::convert(const ConversionParametersPtr& params)
+{
+    ConversionResultPtr res = preConvert(params);
+    if (!res.get())
+    {
+        ROS_ERROR("Failed to pre-convert");
+        return res;
+    }
     res->success = false;
+
     if (!isScaled && !scale())
     {
         ROS_ERROR("Failed to scale model");
@@ -256,14 +282,13 @@ Urdf2Inventor::ConversionResultPtr Urdf2Inventor::convert(const std::string& roo
 
     ROS_INFO("############### Converting meshes");
 
-    if (!convertMeshes(rootLink, material, res->meshes))
+    if (!convertMeshes(params->rootLinkName, params->material, res->meshes))
     {
         ROS_ERROR("Could not convert meshes");
         return res;
     }
 
-    res->success = true;
-    return res;
+    return postConvert(params, res);
 }
 
 bool Urdf2Inventor::printModel(const std::string& fromLink)
@@ -514,6 +539,11 @@ bool Urdf2Inventor::joinFixedLinks(const std::string& from_link)
 {
     LinkPtr link;
     this->robot.getLink(from_link, link);
+    if (!link.get())
+    {
+        ROS_ERROR_STREAM("No link named "<<from_link);
+        return false;
+    }
     return joinFixedLinks(link);
 }
 
@@ -712,12 +742,31 @@ SoNode * Urdf2Inventor::convertMeshFile(const std::string& filename, double scal
     std::string fileExt = urdf2inventor::helpers::fileExtension(filename.c_str());
 //    ROS_INFO_STREAM("Filename extension: "<<fileExt);
     SoNode * result=NULL;
-    if (fileExt == "dae")
+    std::string fileExtLow=fileExt;
+    boost::to_lower(fileExtLow);
+    if ((fileExtLow != "stl") && (fileExtLow != "obj"))
     {
-        ROS_INFO_STREAM("Need to convert mesh file "<<filename<<" to temporary stl first");
+        ROS_INFO_STREAM("Need to convert mesh file "<<filename<<" to temporary obj/stl first!");
         ROS_ERROR("This still needs to be implemented! See a possibility in package assimp_mesh_converter");
         // could write temporary meshes to TEMP_MESH_DIR
         // after conversion, we need to 
+/*
+        SoInput in;
+        SoNode  *scene = NULL;
+        if (!in.openFile(filename.c_str()))
+        {
+            ROS_ERROR_STREAM("Could not open file "<<filename);
+            return NULL;
+        }
+        scene = SoDB::readAll(&in);
+        if (!scene)
+        {
+            ROS_ERROR_STREAM("Could not read file "<<filename);
+            return NULL;
+
+        }
+        in.closeFile();
+        return scene;*/
     }
     else
     {
@@ -732,6 +781,7 @@ SoNode * Urdf2Inventor::convertMeshFileIvcon(const std::string& filename, double
 {
     // int ssize=10000;
     // char bigOutBuf[ssize];
+    //ROS_INFO_STREAM("IVCONV reading "<<filename);
 #ifdef REDIRECT_STDOUT
     urdf2inventor::helpers::redirectStdOut(getStdOutRedirectFile().c_str());
 #endif
@@ -739,7 +789,6 @@ SoNode * Urdf2Inventor::convertMeshFileIvcon(const std::string& filename, double
     // temporarily write it to file and then read it again
     IVCONV::SCALE_FACTOR = scale_factor;
     IVCONV ivconv;
-    ROS_INFO_STREAM("IVCONV reading "<<filename);
     if (!ivconv.read(filename))
     {
         ROS_ERROR("Can't read mesh file %s", filename.c_str());
@@ -752,7 +801,6 @@ SoNode * Urdf2Inventor::convertMeshFileIvcon(const std::string& filename, double
         ROS_ERROR("Can't write mesh file %s", TMP_FILE_IV);
         return NULL;
     }
-    ROS_INFO_STREAM("IVCONV finished reading "<<filename);
 
     SoInput in;
     SoNode  *scene = NULL;
@@ -765,6 +813,7 @@ SoNode * Urdf2Inventor::convertMeshFileIvcon(const std::string& filename, double
     urdf2inventor::helpers::resetStdOut();
     // ROS_INFO("We got %s",bigOutBuf);
 #endif
+    //ROS_INFO_STREAM("IVCONV finished reading "<<filename);
     return scene;
 }
 
@@ -1032,7 +1081,6 @@ SoNode * Urdf2Inventor::loadAndGetAsInventor(const std::string& urdfFilename, co
         rootLink = getRootLinkName();
     }
 
-
     std::vector<std::string> jointNames;
     if (!getJointNames(rootLink, true, jointNames))
     {
@@ -1188,35 +1236,39 @@ bool Urdf2Inventor::getModelFromFile(const std::string& filename, std::string& x
 
 
 Urdf2Inventor::ConversionResultPtr Urdf2Inventor::loadAndConvert(const std::string& urdfFilename,
-        const std::string& convertFromLink,
-        const std::string& material)
+        bool joinFixed,
+        const ConversionParametersPtr& params)
 {
-    ConversionResultPtr result(new ConversionResultT(OUTPUT_EXTENSION, MESH_OUTPUT_DIRECTORY_NAME));
-    result->success = false;
-    
+    ConversionResultPtr failResult(new ConversionResultT(OUTPUT_EXTENSION, MESH_OUTPUT_DIRECTORY_NAME));
+    failResult->success = false;
+
+    ROS_INFO_STREAM("Loading model from file "<<urdfFilename);
+
     if (!loadModelFromFile(urdfFilename))
     {
         ROS_ERROR("Could not load file");
-        return result;
+        return failResult;
     }
 
+
     ROS_INFO("Converting files for robot %s", getRobotName().c_str());
-    std::string rootLink = convertFromLink; 
+    std::string rootLink = params->rootLinkName; 
     if (rootLink.empty())
     {
         rootLink = getRootLinkName();
     }
-    
 
-    if (!joinFixedLinks(rootLink))
+    if (joinFixed) ROS_INFO("Joining fixed links..");
+    if (joinFixed && !joinFixedLinks(rootLink))
     {
-        ROS_ERROR("Could not traverse");
-        return result;
+        ROS_ERROR("Could not join fixed links");
+        return failResult;
     }
+
     // ROS_INFO("00000000000000000000000");
     // p.printModel(rootLink);
 
-    result = convert(rootLink, material);
+    ConversionResultPtr result = convert(params);
     if (!result->success)
     {
         ROS_ERROR("Could not do the conversion");

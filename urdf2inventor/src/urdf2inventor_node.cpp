@@ -66,9 +66,13 @@ int main(int argc, char** argv)
     urdf2inventor::Urdf2Inventor converter(scaleFactor);
 
     ROS_INFO("Starting model conversion...");
+        
+    urdf2inventor::Urdf2Inventor::ConversionParametersPtr params = converter.getBasicConversionParams(rootLinkName, outputMaterial);
+
+    ROS_INFO("Loading and converting...");
 
     urdf2inventor::Urdf2Inventor::ConversionResultPtr cResult =
-        converter.loadAndConvert(urdf_filename, rootLinkName, outputMaterial);
+        converter.loadAndConvert(urdf_filename, true, params);
     if (!cResult->success)
     {
         ROS_ERROR("Failed to process.");

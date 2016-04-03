@@ -18,17 +18,11 @@
 
 #include <urdf2inventor/Helpers.h>
 
-#include <ros/ros.h>
-
-#include <map>
-#include <string>
-#include <vector>
-
 template<typename MeshFormat>
-bool urdf2inventor::FileIO<MeshFormat>::initOutputDir() const
+bool urdf2inventor::FileIO<MeshFormat>::initOutputDir(const ConversionResultPtr& data) const
 {
     return urdf2inventor::helpers::makeDirectoryIfNeeded(outputDir.c_str())
-           && initOutputDirImpl();
+           && initOutputDirImpl(data);
 }
 
 template<typename MeshFormat>
@@ -43,6 +37,8 @@ bool urdf2inventor::FileIO<MeshFormat>::writeMeshFiles(const std::map<std::strin
         ROS_ERROR("Could not create directory %s", outputMeshDir.c_str());
         return false;
     }
+
+    ROS_INFO_STREAM("urdf2inventor::FileIO::writeMeshFiles into "<<outputDir);
 
     // write the mesh files
     typename std::map<std::string, MeshFormat>::const_iterator mit;
@@ -74,7 +70,7 @@ template<typename MeshFormat>
 bool urdf2inventor::FileIO<MeshFormat>::write(const ConversionResultPtr& data) const
 {
     // First of all, see if we can create output directory
-    if (!initOutputDir())
+    if (!initOutputDir(data))
     {
         ROS_ERROR("Can't make directory %s", outputDir.c_str());
         return false;

@@ -25,10 +25,15 @@
 #include <urdf2inventor/ConversionResult.h>
 #include <architecture_binding/SharedPtr.h>
 
+#include <ros/ros.h>
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <map>
 #include <vector>
+#include <map>
+
+
 
 namespace urdf2inventor
 {
@@ -67,7 +72,7 @@ protected:
      * Initializes the output directory. Will also call initOutputDirImpl() after
      * creating the directory \e outputDir.
      */
-    bool initOutputDir() const;
+    bool initOutputDir(const ConversionResultPtr& data) const;
 
     bool writeMeshFiles(const std::map<std::string, MeshFormat>& meshes,
                         const std::string& MESH_OUTPUT_EXTENSION,
@@ -76,7 +81,7 @@ protected:
     /**
      * Called from initOutputDir(), can be used by subclassees
      */
-    virtual bool initOutputDirImpl() const { return true; };
+    virtual bool initOutputDirImpl(const ConversionResultPtr& data) const { return true; };
     
     /**
      * Called from write(ConversionResultPtr&), after initOutputDir() has been called and
@@ -85,10 +90,15 @@ protected:
      */
     virtual bool writeImpl(const ConversionResultPtr& data) const { return true; }
 
+    inline const std::string& getOutputDirectory() const
+    {
+        return outputDir;
+    }
+private:
     std::string outputDir;
 };
-    
+}  //  namespace urdf2inventor
+
 #include <urdf2inventor/FileIO.hpp>
 
-}  //  namespace urdf2inventor
 #endif   // URDF2INVENTOR_FILEIO_H
