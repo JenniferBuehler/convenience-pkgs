@@ -116,14 +116,22 @@ public:
 
     /**
      * Loads the URDF from parameter server
+     * TODO: still need to re-activate this by also reading the
+     * robot urdf into field \e robot_urdf
      */
-    bool loadModelFromParameterServer(); 
+    //bool loadModelFromParameterServer(); 
 
     /**
      * Removes all fixed links in the model by adding visuals and collision geometry to the first parent link which is
      * attached to a non-fixed link. Model has to be loaded with any of the load() methods first. 
      */
     bool joinFixedLinks(const std::string& from_link);
+
+    /**
+     * Transform the URDF such that all rotation axises (in the joint's local reference frame) are this axis
+     */
+    bool allRotationsToAxis(const std::string& fromLinkName, const Eigen::Vector3d& axis);
+
 
     /**
      * Returns an inventor node for all links down from (and including) from_link.
@@ -210,6 +218,10 @@ public:
         return this->robot.getName();
     }
 
+    std::string getRobotURDF() const
+    {
+        return robot_urdf;
+    }
 protected:
     typedef architecture_binding::shared_ptr<urdf::Visual>::type VisualPtr;
     typedef architecture_binding::shared_ptr<urdf::Geometry>::type GeometryPtr;
@@ -344,7 +356,71 @@ protected:
         // the resulting meshes (inventor files), indexed by the link name
         std::map<std::string, MeshFormat> resultMeshes;
     };
-   
+  
+
+    /**
+     * \brief Recursion data for getting a list of joints, ordered by dependency (no joint depending on others
+     * will come before them in the result vector)
+     */
+    class OrderedJointsRecursionParams: public Urdf2Inventor::RecursionParams
+    {
+    public:
+        typedef boost::shared_ptr<OrderedJointsRecursionParams> Ptr;
+        OrderedJointsRecursionParams(): RecursionParams() {}
+        OrderedJointsRecursionParams(bool _allowSplits, bool _onlyActive):
+            allowSplits(_allowSplits),
+            onlyActive(_onlyActive) {}
+        OrderedJointsRecursionParams(const OrderedJointsRecursionParams& o):
+            RecursionParams(o) {}
+        virtual ~OrderedJointsRecursionParams() {}
+
+        // Result set
+        std::vector<Urdf2Inventor::JointPtr> dependencyOrderedJoints;
+
+        // Allow splits, i.e. one link has several child joints. if this is set to false,
+        // the recursive operation will fail at splitting points.
+        bool allowSplits;
+
+        // Only add joints to the result which are active.
+        bool onlyActive;
+    };
+
+
+    // Function for recursive getDependencyOrderedJoints
+    int addJointLink(RecursionParamsPtr& p);
+
+    /**
+     * Returns all joints starting from from_joint (including from_joint) within the tree. This is obtained by depth-first traversal,
+     * so all joints in the result won't depend on any joints further back in the result set.
+     */
+    bool getDependencyOrderedJoints(std::vector<JointPtr>& result, const JointPtr& from_joint,
+                                    bool allowSplits = true, bool onlyActive = true);
+
+    /**
+     * Returns all joints down from from_link within the tree. This is obtained by depth-first traversal,
+     * so all joints in the result won't depend on any joints further back in the result set.
+     */
+    bool getDependencyOrderedJoints(std::vector<JointPtr>& result, const LinkPtr& from_link,
+                                    bool allowSplits = true, bool onlyActive = true);
+
+
+    /**
+     * \retval -2 on error
+     * \retval -1 if the joint has multiple children
+     * \retval 0 if the joint has no child joints (it's an end effector joint),
+     * \retval 1 if a child joint is returned in parameter "child"
+     */
+    int getChildJoint(const JointPtr& joint, JointPtr& child);
+
+    bool isChildOf(const LinkConstPtr& parent, const LinkConstPtr& child) const;
+    bool isChildJointOf(const LinkConstPtr& parent, const JointConstPtr& joint) const;
+    
+    LinkPtr getChildLink(const JointPtr& joint);
+    LinkConstPtr readChildLink(const JointPtr& joint) const;
+    
+    JointPtr getParentJoint(const JointPtr& joint);
+    JointConstPtr readParentJoint(const JointPtr& joint) const;
+ 
     /**
      * Method called by convert() which can be implemented by subclasses to return a different type of ConversionResult
      * and do any operations required *before* the main body of convert() is being done.
@@ -414,7 +490,9 @@ protected:
     }
 
     JointPtr getJoint(const std::string& name);
+    JointConstPtr readJoint(const std::string& name) const;
     LinkPtr getLink(const std::string& name);
+    LinkConstPtr readLink(const std::string& name) const;
 
     // Scales up the translation part of the transform t by the given factor
     void scaleTranslation(EigenTransform& t, double scale_factor);
@@ -423,28 +501,28 @@ protected:
     void setTransform(const EigenTransform& t, JointPtr& joint);
 
     // Get joint transform to parent
-    EigenTransform getTransform(const urdf::Pose& p);
+    EigenTransform getTransform(const urdf::Pose& p) const;
 
     // Get joint transform to parent
-    inline EigenTransform getTransform(const JointPtr& joint)
+    inline EigenTransform getTransform(const JointConstPtr& joint) const
     {
         return getTransform(joint->parent_to_joint_origin_transform);
     }
 
     // Get transform to parent link (transform of link's parent joint)
-    inline EigenTransform getTransform(const LinkPtr& link)
+    inline EigenTransform getTransform(const LinkConstPtr& link) const
     {
         return getTransform(link->parent_joint);
     }
 
-    Eigen::Matrix4d getTransformMatrix(const LinkPtr& from_link,  const LinkPtr& to_link);
+    Eigen::Matrix4d getTransformMatrix(const LinkConstPtr& from_link,  const LinkConstPtr& to_link) const;
 
-    inline EigenTransform getTransform(const LinkPtr& from_link,  const LinkPtr& to_link)
+    inline EigenTransform getTransform(const LinkConstPtr& from_link,  const LinkConstPtr& to_link) const
     {
         return EigenTransform(getTransformMatrix(from_link, to_link));
     }
 
-    EigenTransform getTransform(const LinkPtr& from_link,  const JointPtr& to_joint);
+    EigenTransform getTransform(const LinkPtr& from_link,  const JointPtr& to_joint) const;
 
     const urdf::Model& getRobot() const
     {
@@ -458,9 +536,33 @@ protected:
     {
         return scaleFactor;
     }
-    
+
+    /**
+     * Applies the transformation on the joint transform
+     * \param scaleTransform set to true if the urdf's transforms are to be scaled (using scaleFactor) before applying the transform
+     */
+    bool applyTransform(JointPtr& joint, const EigenTransform& trans, bool preMult);
+
+    /**
+     * Applies the transformation on the link's visuals, collisions and intertial.
+     * \param scaleTransform set to true if the urdf's transforms are to be scaled (using scaleFactor) before applying the transform
+     */
+    void applyTransform(LinkPtr& link, const EigenTransform& trans, bool preMult);
+
 
 private:
+
+    /**
+     * \return true if this joint needs a transformation to align its rotation axis with the given axis.
+     * In this case the rotation parameter contains the necessary rotation.
+     */
+    bool jointTransformForAxis(const urdf::Joint& joint, const Eigen::Vector3d& axis, Eigen::Quaterniond& rotation);
+
+    /**
+     * Recursively re-arranges all joint-transforms (starting from joint) and visual/collision/intertial
+     * rotations such that all joints rotate around z-axis
+     */
+    bool allRotationsToAxis(JointPtr& joint, const Eigen::Vector3d& axis);
 
     /**
      * scales the translation part of the joint transform by the given factor
@@ -518,7 +620,7 @@ private:
     /**
      * Returns all joints between from_link and to_link
      */
-    std::vector<JointPtr> getChain(const LinkPtr& from_link, const LinkPtr& to_link) const;
+    std::vector<JointPtr> getChain(const LinkConstPtr& from_link, const LinkConstPtr& to_link) const;
 
     /**
      * Converts a mesh file (given in filename) to an Inventor structure, to which the root is returned.
@@ -540,7 +642,7 @@ private:
     SoNode * getAllVisuals(const LinkPtr link, double scale_factor, bool scaleUrdfTransforms = false);
 
     // Returns the transform eTrans as SoTransform node
-    SoTransform * getTransform(const EigenTransform& eTrans);
+    SoTransform * getTransform(const EigenTransform& eTrans) const;
 
     /**
      * Adds a SoNode (addAsChild) as a child (to parent), transformed by the given transform (eTrans)
@@ -580,6 +682,7 @@ private:
     std::string getStdOutRedirectFile();
 
     urdf::Model robot;
+    std::string robot_urdf;
 
     // The graspit model might ahve to be scaled compared to the urdf model, this is the scale factor which does that.
     float scaleFactor;
