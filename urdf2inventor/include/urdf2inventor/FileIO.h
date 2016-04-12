@@ -67,21 +67,25 @@ public:
      */    
     bool write(const ConversionResultPtr& data) const;
 
-protected:
     /**
-     * Initializes the output directory. Will also call initOutputDirImpl() after
-     * creating the directory \e outputDir.
+     * Initializes the output directory and does implementation-specific
+     * initialization depending on the robot name \e robotName.
+     * This method is called from write(), so it should only be used
+     * if write() is not called as well.
      */
-    bool initOutputDir(const ConversionResultPtr& data) const;
+    bool initOutputDir(const std::string& robotName) const;
 
+
+protected:
     bool writeMeshFiles(const std::map<std::string, MeshFormat>& meshes,
                         const std::string& MESH_OUTPUT_EXTENSION,
                         const std::string& MESH_OUTPUT_DIRECTORY_NAME) const;
 
     /**
      * Called from initOutputDir(), can be used by subclassees
+     * Will be called after creating the directory \e outputDir.
      */
-    virtual bool initOutputDirImpl(const ConversionResultPtr& data) const { return true; };
+    virtual bool initOutputDirImpl(const std::string& robotName) const { return true; };
     
     /**
      * Called from write(ConversionResultPtr&), after initOutputDir() has been called and

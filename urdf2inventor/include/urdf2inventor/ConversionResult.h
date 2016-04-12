@@ -70,12 +70,15 @@ public:
         meshOutputDirectoryName(_meshOutputDirectoryName),
         success(false) {}
     ConversionResult(const ConversionResult& o):
+        robotName(o.robotName),
         meshes(o.meshes),
         meshOutputExtension(o.meshOutputExtension),
         meshOutputDirectoryName(o.meshOutputDirectoryName),
         success(o.success) {}
 
     virtual ~ConversionResult() {}
+
+    std::string robotName;
 
     // the resulting meshes (inventor files), indexed by the link name
     std::map<std::string, MeshFormat> meshes;

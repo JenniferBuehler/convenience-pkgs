@@ -19,10 +19,10 @@
 #include <urdf2inventor/Helpers.h>
 
 template<typename MeshFormat>
-bool urdf2inventor::FileIO<MeshFormat>::initOutputDir(const ConversionResultPtr& data) const
+bool urdf2inventor::FileIO<MeshFormat>::initOutputDir(const std::string& robotName) const
 {
     return urdf2inventor::helpers::makeDirectoryIfNeeded(outputDir.c_str())
-           && initOutputDirImpl(data);
+           && initOutputDirImpl(robotName);
 }
 
 template<typename MeshFormat>
@@ -70,9 +70,9 @@ template<typename MeshFormat>
 bool urdf2inventor::FileIO<MeshFormat>::write(const ConversionResultPtr& data) const
 {
     // First of all, see if we can create output directory
-    if (!initOutputDir(data))
+    if (!initOutputDir(data->robotName))
     {
-        ROS_ERROR("Can't make directory %s", outputDir.c_str());
+        ROS_ERROR("Can't initialize output directory %s", outputDir.c_str());
         return false;
     }
 

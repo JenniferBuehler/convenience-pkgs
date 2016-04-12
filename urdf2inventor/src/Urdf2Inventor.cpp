@@ -635,6 +635,18 @@ int Urdf2Inventor::traverseTreeTopDown(const LinkPtr& link, boost::function< int
     return 1;
 };
 
+
+bool Urdf2Inventor::hasChildLink(const LinkConstPtr& link, const std::string& childName) const
+{
+    for (unsigned int i = 0; i < link->child_links.size(); ++i)
+    {
+        LinkPtr childLink = link->child_links[i];
+        if (childLink->name == childName) return true;
+    }
+    return false;
+}
+
+
 bool Urdf2Inventor::traverseTreeBottomUp(LinkPtr& link, boost::function< LinkPtr(LinkPtr&)> link_cb)
 {
     std::set<std::string> toTraverse;
@@ -646,6 +658,12 @@ bool Urdf2Inventor::traverseTreeBottomUp(LinkPtr& link, boost::function< LinkPtr
 
     for (std::set<std::string>::iterator it = toTraverse.begin(); it != toTraverse.end(); ++it)
     {
+        if (!hasChildLink(link,*it))
+        {
+            ROS_ERROR_STREAM("Consistency: Link "<<link->name<<" does not have child "<<*it<<" any more.");
+            return false;
+        }
+        
         LinkPtr childLink;
         this->robot.getLink(*it, childLink);
 
@@ -685,7 +703,7 @@ int Urdf2Inventor::checkActiveJoints(RecursionParamsPtr& p)
     if (level==0) return 1;
     if (link->parent_joint.get() && !isActive(link->parent_joint))
     {
-        ROS_INFO("Urdf2Inventor: Found fixed link %s", link->parent_joint->name.c_str());
+        ROS_INFO("Urdf2Inventor: Found fixed joint %s", link->parent_joint->name.c_str());
         return -1;
     }
     return 1; 
@@ -719,31 +737,50 @@ bool Urdf2Inventor::joinFixedLinks(const std::string& from_link)
 
 bool Urdf2Inventor::joinFixedLinks(LinkPtr& from_link)
 {
-    // we have to call joinFixedLinksOnThis only from child
-    // links of from_link, because the jointing happens with the
-    // parent joint
+    ROS_INFO_STREAM("Joining fixed links starting from "<<from_link->name
+        <<" with "<<from_link->child_links.size()<<" children");
+
+    // call joinFixedLinksOnThis only from child
+    // links of from_link, because the joining happens with the
+    // parent joint.
+    std::set<std::string> toTraverse;
     for (unsigned int i = 0; i < from_link->child_links.size(); ++i)
     {
         LinkPtr childLink = from_link->child_links[i];
+        toTraverse.insert(childLink->name);
+    }
+
+    for (std::set<std::string>::iterator it = toTraverse.begin(); it != toTraverse.end(); ++it)
+    {
+        if (!hasChildLink(from_link,*it))
+        {
+            ROS_WARN_STREAM("Urdf2Inventor, test case: Link "<<from_link->name
+                <<" does not have child "<<*it<<" any more, this can happen if it was joined.");
+            continue;
+        }
+        
+        LinkPtr childLink;
+        this->robot.getLink(*it, childLink);
+ 
         if (!this->traverseTreeBottomUp(childLink, boost::bind(&Urdf2Inventor::joinFixedLinksOnThis, this, _1)))
         {
             ROS_ERROR_STREAM("Could not join fixed links from link "<<childLink->name);
             return false;
         }
     }
-
-/*  Old: join fixed links including this link's parent joint:
+/*
+    // OLD: join fixed joints incl. parent joint
     if (!this->traverseTreeBottomUp(from_link, boost::bind(&Urdf2Inventor::joinFixedLinksOnThis, this, _1)))
     {
         ROS_ERROR("Could not join fixed links");
         return false;
     }
 */
-
+    
     // consistency check: All joints in the tree must be active now!
     if (hasFixedJoints(from_link))
     {
-        ROS_ERROR("consistency: We should now only have active joitns in the tree!");
+        ROS_ERROR("consistency: We should now only have active joints in the tree!");
         return false;
     }
     return true;
@@ -778,7 +815,7 @@ Urdf2Inventor::LinkPtr Urdf2Inventor::joinFixedLinksOnThis(LinkPtr& link)
 
     if (isActive(jointToParent))
     {
-        // ROS_INFO("Parent of %s is active so won't delete",link->name.c_str());
+        // ROS_INFO("Parent of %s (%s) is active so won't delete",link->name.c_str(), jointToParent->name.c_str());
         // We won't delete this joint, as it is active.
         // ROS_INFO("Joining chain finished between %s and %s",parentLink->name.c_str(),link->name.c_str());
         return link;
@@ -786,7 +823,7 @@ Urdf2Inventor::LinkPtr Urdf2Inventor::joinFixedLinksOnThis(LinkPtr& link)
 
     // this joint is fixed, so we will delete it
 
-    // ROS_INFO("Joining between %s and %s",parentLink->name.c_str(),link->name.c_str());
+    // ROS_INFO("Joining fixed joint (%s) between %s and %s",jointToParent->name.c_str(), parentLink->name.c_str(),link->name.c_str());
     // remove this link from the parent
     for (std::vector<LinkPtr >::iterator pc = parentLink->child_links.begin();
             pc != parentLink->child_links.end(); pc++)
@@ -1429,14 +1466,14 @@ SoNode * Urdf2Inventor::loadAndGetAsInventor(const std::string& urdfFilename, co
         return NULL;
     }
 
-    ROS_INFO("Converting files for robot %s", getRobotName().c_str());
+    ROS_INFO("Converting robot %s URDF to inventor", getRobotName().c_str());
     std::string rootLink=from_link;
     if (rootLink.empty()){
         rootLink = getRootLinkName();
     }
 
     std::vector<std::string> jointNames;
-    if (!getJointNames(rootLink, true, jointNames))
+    if (!getJointNames(rootLink, false, jointNames))
     {
         ROS_WARN("Could not retrieve joint names to print on screen");
     }
@@ -1611,6 +1648,13 @@ Urdf2Inventor::ConversionResultPtr Urdf2Inventor::loadAndConvert(const std::stri
     if (rootLink.empty())
     {
         rootLink = getRootLinkName();
+    }
+
+    LinkPtr _rootLink = getLink(rootLink);
+    if (!_rootLink.get())
+    {
+        ROS_ERROR("Root link %s does not exist",rootLink.c_str());
+        return failResult;
     }
 
     if (joinFixed) ROS_INFO("Joining fixed links..");

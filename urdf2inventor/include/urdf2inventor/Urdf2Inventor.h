@@ -679,6 +679,9 @@ private:
      */
     bool writeAsInventor(const std::string& outFilename, const LinkPtr& from_link, bool useScaleFactor = true);
 
+
+    bool hasChildLink(const LinkConstPtr& link, const std::string& childName) const;
+
     std::string getStdOutRedirectFile();
 
     urdf::Model robot;
