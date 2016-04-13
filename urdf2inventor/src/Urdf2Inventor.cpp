@@ -823,7 +823,7 @@ Urdf2Inventor::LinkPtr Urdf2Inventor::joinFixedLinksOnThis(LinkPtr& link)
 
     // this joint is fixed, so we will delete it
 
-    // ROS_INFO("Joining fixed joint (%s) between %s and %s",jointToParent->name.c_str(), parentLink->name.c_str(),link->name.c_str());
+    ROS_INFO("Joining fixed joint (%s) between %s and %s",jointToParent->name.c_str(), parentLink->name.c_str(),link->name.c_str());
     // remove this link from the parent
     for (std::vector<LinkPtr >::iterator pc = parentLink->child_links.begin();
             pc != parentLink->child_links.end(); pc++)
@@ -1163,7 +1163,7 @@ SoNode * Urdf2Inventor::getAllVisuals(const LinkPtr link, double scale_factor, b
         }
         else
         {
-            ROS_ERROR("Only support mesh files so far");
+            ROS_ERROR_STREAM("Only support mesh files so far, but have urdf::Geometry type "<<geom->type);
             return NULL;
         }
         ++i;
@@ -1307,7 +1307,11 @@ Urdf2Inventor::EigenTransform Urdf2Inventor::getTransform(const LinkPtr& from_li
 
 bool equalAxes(const Eigen::Vector3d& z1, const Eigen::Vector3d& z2)
 {
-    double dot = z1.dot(z2);
+    Eigen::Vector3d _z1=z1;
+    Eigen::Vector3d _z2=z2;
+    _z1.normalize();
+    _z2.normalize();
+    double dot = _z1.dot(_z2);
     return (std::fabs(dot - 1.0)) < U2G_EPSILON;
     // float alpha = acos(z1.dot(z2));
     // return (std::fabs(alpha) < U2G_EPSILON);
@@ -1319,6 +1323,7 @@ bool Urdf2Inventor::jointTransformForAxis(const urdf::Joint& joint,
 {
     Eigen::Vector3d rotAxis(joint.axis.x, joint.axis.y, joint.axis.z);
     rotAxis.normalize();
+    // ROS_INFO_STREAM("Rotation axis for joint "<<joint.name<<": "<<rotAxis);
     if (equalAxes(rotAxis, axis)) return false;
 
     rotation = Eigen::Quaterniond::FromTwoVectors(rotAxis, axis);

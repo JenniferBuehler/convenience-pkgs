@@ -95,6 +95,56 @@ bool convert(const std::string& inFile, const std::string& outFile, const std::s
 }
 
 
+
+
+bool convertFiles(const std::string& input, const std::string& input_format,
+    const std::string& output, const std::string& output_format, bool recursive)
+{
+    ROS_INFO_STREAM("Converting all files with extension "<<input_format
+        <<" in "<<input<<" and writing them to "<<output<<" as "<<output_format);
+    boost::filesystem::path p(input);
+    boost::filesystem::directory_iterator end_itr;
+    for (boost::filesystem::directory_iterator itr(p); itr != end_itr; ++itr)
+    {
+        if (boost::filesystem::is_regular_file(itr->path()))
+        {
+            std::string current_file = itr->path().string();
+            std::string extension = itr->path().extension().string();
+            extension.erase(0,1); //remove the dot
+            // ROS_INFO_STREAM("Current file: "<<current_file<<" with extension "<<extension);
+
+            if (extension == input_format)
+            {
+                // ROS_INFO_STREAM("Found a file of type "<<input_format<<": "<<current_file);
+                std::string swappedFile = swapFileExtension(current_file, output_format, true);
+                std::stringstream str;
+                str<<output<<"/"<<swappedFile;
+                std::string out_file = str.str();
+                ROS_INFO_STREAM("Processing "<<current_file<<", new filename "<<swappedFile<<", saving as "<<out_file);
+                if (!convert(current_file, out_file, output_format))
+                {
+                    ROS_ERROR("Could not convert");
+                    return false;
+                }
+            }
+        }
+        else if (recursive)
+        {
+            std::string next_input_dir = itr->path().string();
+            std::string next_output_dir =  output + "/" + itr->path().filename().string();
+            ROS_INFO_STREAM("New input: "<<next_input_dir<<", output="<<next_output_dir);
+            if (!convertFiles(next_input_dir,input_format, next_output_dir, output_format, recursive))
+            {
+                ROS_ERROR_STREAM("Could not convert in recursion directory "<<next_input_dir);
+            }
+        }
+    }
+    return true;
+}
+
+
+
+
 void usage(char * prog)
 {
     ROS_INFO_STREAM("Usage: (arguments in fixed order!): " << prog <<
@@ -180,15 +230,22 @@ int main(int argc, char ** argv)
         usage(argv[0]);
         return 0;
     }
+
+
+    bool recursive=true;
+    if (!convertFiles(input,input_format, output, output_format, recursive))
+    {
+        ROS_ERROR_STREAM("Could not convert.");
+    }
+
     
-    ROS_INFO_STREAM("Converting all files with extension "<<input_format
+    /*ROS_INFO_STREAM("Converting all files with extension "<<input_format
         <<" in "<<input<<" and writing them to "<<output<<" as "<<output_format);
 
     boost::filesystem::path p(input);
     boost::filesystem::directory_iterator end_itr;
     for (boost::filesystem::directory_iterator itr(p); itr != end_itr; ++itr)
     {
-        // If it's not a directory, list it. If you want to list directories too, just remove this check.
         if (boost::filesystem::is_regular_file(itr->path()))
         {
             std::string current_file = itr->path().string();
@@ -210,7 +267,7 @@ int main(int argc, char ** argv)
                 }
             }
         }
-    }
+    }*/
 
     ROS_INFO_STREAM("Conversion successful. Output written to "<<output);
     return 0;
