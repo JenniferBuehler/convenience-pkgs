@@ -48,6 +48,7 @@ int main(int argc, char *argv[])
     /**
      * TODO: For some reason I haven't yet further investigated, view.init() has to be called after
      * loadAndGetAsInventor(), or it won't work. Find out why, and fix it.
+     * It has probably to do with the calls of SoDB::init involved by ivcon as well.
      */
 
     bool success = true;
@@ -57,7 +58,32 @@ int main(int argc, char *argv[])
     {
         std::cout<<"Converting model from file "<<inputFile<<"..."<<std::endl;
         if (!fromLink.empty()) std::cout<<"Staring from link "<<fromLink<<std::endl;
-        SoNode * node = converter.loadAndGetAsInventor(inputFile, fromLink);
+
+        if (!converter.loadModelFromFile(inputFile))
+        {
+            std::cerr<<"Could not load file "<<inputFile<<std::endl;
+            return 0;
+        }
+        converter.printJointNames(fromLink);
+
+        // TODO: For texting, fixed links can be joined and axes rotated.
+        // This can be parameterized at some point, for now it's only used for testing.
+        bool joinFixedLinks = true;
+        if (joinFixedLinks && !converter.joinFixedLinks(fromLink))
+        {
+            std::cerr<<"Could not join fixed links"<<std::endl;
+            return 0;
+        }
+        
+        bool rotateAxes = true;
+        Eigen::Vector3d axis(0,0,1);
+        if (rotateAxes && !converter.allRotationsToAxis(fromLink, axis))
+        {
+            std::cerr<<"Could not rotate axes"<<std::endl;
+            return 0;
+        }
+    
+        SoNode * node = converter.getAsInventor(fromLink, false);
         if (!node)
         {
             std::cout<<"ERROR: Could not get inventor node"<<std::endl;

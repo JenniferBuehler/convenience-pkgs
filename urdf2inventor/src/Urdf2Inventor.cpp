@@ -31,6 +31,9 @@
 #include <Inventor/nodes/SoSeparator.h>
 #include <Inventor/nodes/SoSelection.h>
 #include <Inventor/nodekits/SoNodeKit.h>
+#include <Inventor/nodes/SoMaterial.h>
+#include <Inventor/nodes/SoSphere.h>
+#include <Inventor/nodes/SoCylinder.h>
 
 #include <map>
 #include <vector>
@@ -790,7 +793,7 @@ Urdf2Inventor::LinkPtr Urdf2Inventor::joinFixedLinksOnThis(LinkPtr& link)
 {
     if (!link.get()) return link;
 
-    // ROS_INFO("joinFixedLinksOnThis: Traverse %s",link->name.c_str());
+    ROS_INFO("--joinFixedLinksOnThis: Traverse %s",link->name.c_str());
     JointPtr jointToParent = link->parent_joint;
     if (!jointToParent.get())
     {
@@ -851,7 +854,7 @@ Urdf2Inventor::LinkPtr Urdf2Inventor::joinFixedLinksOnThis(LinkPtr& link)
 
     // the local transfrom of the parent joint
     EigenTransform localTrans = getTransform(link);
-
+    ROS_INFO_STREAM("Transform between "<<parentLink->name<<" and "<<link->name<<": "<<localTrans);
     // all this link's child joints now must receive the extra transform from this joint which we removed.
     // then, the joints should be added to the parent link
     for (std::vector<JointPtr >::iterator j = link->child_joints.begin(); j != link->child_joints.end(); j++)
@@ -862,10 +865,24 @@ Urdf2Inventor::LinkPtr Urdf2Inventor::joinFixedLinksOnThis(LinkPtr& link)
             ROS_ERROR("consistency: At this stage, we should only have active joints, found joint %s!",
                       child->name.c_str());
         }
-        EigenTransform vTrans = getTransform(child);
+        EigenTransform jTrans = getTransform(child);
 
-        vTrans = localTrans * vTrans;
-        setTransform(vTrans, child);
+        jTrans = localTrans * jTrans;
+        setTransform(jTrans, child);
+        
+        EigenTransform rotAxTrans=jTrans.inverse();
+#if 0
+        ROS_INFO_STREAM("Transforming rotation axis by "<<rotAxTrans);
+        ROS_INFO_STREAM("Old child axis of "<<child->name<<": "<<child->axis);
+        applyTransform(rotAxTrans,child->axis); 
+        /*Eigen::Vector3d childAxis(child->axis.x, child->axis.y, child->axis.z);
+        childAxis.normalize();
+        child->axis.x=childAxis.x();
+        child->axis.y=childAxis.y();
+        child->axis.z=childAxis.z();*/
+        ROS_INFO_STREAM("New child axis of "<<child->name<<": "<<child->axis);
+#endif
+        // add this child joint to the parent
         child->parent_link_name = parentLink->name;
         parentLink->child_joints.push_back(child);
 
@@ -885,9 +902,9 @@ Urdf2Inventor::LinkPtr Urdf2Inventor::joinFixedLinksOnThis(LinkPtr& link)
     {
         VisualPtr visual = *vit;
         // apply the transform to the visual before adding it to the parent
-        EigenTransform vTrans = getTransform(visual->origin);
-        vTrans = localTrans * vTrans;
-        setTransform(vTrans, visual->origin);
+        EigenTransform jTrans = getTransform(visual->origin);
+        jTrans = localTrans * jTrans;
+        setTransform(jTrans, visual->origin);
         parentLink->visual_array.push_back(visual);
     }
 
@@ -897,9 +914,9 @@ Urdf2Inventor::LinkPtr Urdf2Inventor::joinFixedLinksOnThis(LinkPtr& link)
     {
         CollisionPtr coll = *cit;
         // apply the transform to the visual before adding it to the parent
-        EigenTransform vTrans = getTransform(coll->origin);
-        vTrans = localTrans * vTrans;
-        setTransform(vTrans, coll->origin);
+        EigenTransform jTrans = getTransform(coll->origin);
+        jTrans = localTrans * jTrans;
+        setTransform(jTrans, coll->origin);
         parentLink->collision_array.push_back(coll);
     }
 
@@ -1129,6 +1146,10 @@ SoNode * Urdf2Inventor::getAllVisuals(const LinkPtr link, double scale_factor, b
     SoNodeKit::init();
     SoNode * allVisuals = new SoSeparator();
     allVisuals->ref();
+/*    SoMaterial * mat = new SoMaterial();
+    mat->diffuseColor.setValue(0,0,1);
+    mat->ambientColor.setValue(0.2, 0.2, 0.2);
+    allVisuals->addChild(mat);*/
     std::string linkName = link->name;
     unsigned int i = 0;
     for (std::vector<VisualPtr >::const_iterator vit = link->visual_array.begin();
@@ -1222,7 +1243,6 @@ Urdf2Inventor::JointConstPtr Urdf2Inventor::readJoint(const std::string& name) c
     return ptr;
 }
 
-
 void Urdf2Inventor::setTransform(const EigenTransform& t, urdf::Pose& p)
 {
     Eigen::Vector3d trans(t.translation());
@@ -1235,6 +1255,17 @@ void Urdf2Inventor::setTransform(const EigenTransform& t, urdf::Pose& p)
     p.rotation.y = rot.y();
     p.rotation.z = rot.z();
     p.rotation.w = rot.w();
+}
+
+void Urdf2Inventor::applyTransform(const EigenTransform& t, urdf::Vector3& v)
+{
+    Eigen::Vector3d _v(v.x,v.y,v.z);
+    Eigen::Quaterniond rot(t.rotation());
+    //ROS_INFO_STREAM("Rotation: "<<rot);
+    _v=rot*_v;
+    v.x=_v.x();
+    v.y=_v.y();
+    v.z=_v.z();
 }
 
 void Urdf2Inventor::setTransform(const EigenTransform& t, JointPtr& joint)
@@ -1367,7 +1398,7 @@ bool Urdf2Inventor::allRotationsToAxis(JointPtr& joint, const Eigen::Vector3d& a
     Eigen::Quaterniond alignAxis;
     if (jointTransformForAxis(*joint, axis, alignAxis))
     {
-        // ROS_INFO("Transforming z for joint %s",joint->name.c_str());
+        ROS_INFO_STREAM("Transforming axis for joint "<<joint->name<<" with transform "<<alignAxis);
         applyTransform(joint, EigenTransform(alignAxis), false);
         // the link has to receive the inverse transorm, so it stays at the original position
         Eigen::Quaterniond alignAxisInv = alignAxis.inverse();
@@ -1438,29 +1469,22 @@ void Urdf2Inventor::applyTransform(LinkPtr& link, const EigenTransform& trans, b
     if (preMult) vTrans = trans * vTrans;
     else vTrans = vTrans * trans;
     setTransform(vTrans, link->inertial->origin);
-
-#if 0
-    std::map<std::string, std::vector<ContactPtr> >::iterator lCnt = linkContacts.find(link->name);
-    if (lCnt != linkContacts.end())
-    {
-        for (std::vector<ContactPtr>::iterator it = lCnt->second.begin(); it != lCnt->second.end(); ++it)
-        {
-            ContactPtr c = *it;
-            EigenTransform t = EigenTransform::Identity();
-            t.translate(c->loc);
-            t.rotate(c->ori);
-            // ROS_INFO_STREAM("////// Applying transform "<<trans<<" to "<<c->loc);
-            if (preMult) t = trans * t;
-            else         t = t * trans;
-            c->loc = t.translation();
-            c->ori = Eigen::Quaterniond(t.rotation());
-            c->norm = trans.rotation() * c->norm;
-        }
-    }
-#endif
 }
 
 
+void Urdf2Inventor::printJointNames(const std::string& fromLink) 
+{
+    std::vector<std::string> jointNames;
+    if (!getJointNames(fromLink, false, jointNames))
+    {
+        ROS_WARN("Could not retrieve joint names to print on screen");
+    }
+    else
+    {
+        ROS_INFO_STREAM("Joint names starting from "<<fromLink<<":");
+        for (int i=0; i<jointNames.size(); ++i) ROS_INFO_STREAM(jointNames[i]);
+    }
+}
     
 
 SoNode * Urdf2Inventor::loadAndGetAsInventor(const std::string& urdfFilename, const std::string from_link, bool useScaleFactor)
@@ -1476,7 +1500,7 @@ SoNode * Urdf2Inventor::loadAndGetAsInventor(const std::string& urdfFilename, co
     if (rootLink.empty()){
         rootLink = getRootLinkName();
     }
-
+    printJointNames(from_link);
     std::vector<std::string> jointNames;
     if (!getJointNames(rootLink, false, jointNames))
     {
@@ -1491,14 +1515,152 @@ SoNode * Urdf2Inventor::loadAndGetAsInventor(const std::string& urdfFilename, co
 }
 
 
+void addVisual(SoNode * addToNode, SoNode * visual, const Eigen::Vector3d& pos, const Eigen::Quaterniond& rot, float _marker_size, SoMaterial * mat)
+{
+    SoSeparator * node = dynamic_cast<SoSeparator*>(addToNode);
+    if (!node)
+    {
+        ROS_ERROR_STREAM("The node is not a separator, this case should be handeled separately. "
+                         << "For now, no markers are displayed.");
+        return;
+    }
+
+    SoTransform * trans = new SoTransform();
+    trans->translation.setValue(pos.x(), pos.y(), pos.z());
+    trans->rotation.setValue(rot.x(), rot.y(), rot.z(), rot.w());
+    SoSeparator * transSep = new SoSeparator();
+    transSep->addChild(trans);
+    transSep->addChild(visual);
+    if (mat) node->addChild(mat);
+    node->addChild(transSep);
+}
+
+void addSphere(SoNode * addToNode, const Eigen::Vector3d& pos, float radius,
+    float r, float g, float b)
+{
+    SoSphere * s = new SoSphere();
+    s->radius = radius;
+    SoMaterial * mat = new SoMaterial();
+    mat->diffuseColor.setValue(r,g,b);
+    mat->ambientColor.setValue(0.2, 0.2, 0.2);
+    Eigen::Quaterniond rot;
+    rot.setIdentity();
+    addVisual(addToNode, s, pos, rot, radius, mat);
+}
+
+/**
+ * Add a cylinder oriented around z axis, pointed along +z, originating at \e pos
+ */
+void addCylinder(SoNode * addToNode, const Eigen::Vector3d& pos,
+    const Eigen::Quaterniond rot,
+    float radius, float height,
+    float r, float g, float b)
+{
+    SoCylinder * c = new SoCylinder();
+    c->radius = radius;
+    c->height = height;
+
+
+    // SoCylinder is oriented along y axis, so change this to z axis
+    // and also translate such that it extends along +z
+    Eigen::Quaterniond toZ = Eigen::Quaterniond::FromTwoVectors(Eigen::Vector3d(0,1,0), Eigen::Vector3d(0,0,1));
+    typedef Eigen::Transform<double, 3, Eigen::Affine> EigenTransform;
+    SoTransform * trans = new SoTransform();
+    trans->translation.setValue(0,0,height/2);
+    trans->rotation.setValue(toZ.x(), toZ.y(), toZ.z(), toZ.w());
+    SoSeparator * cylinder = new SoSeparator();
+    cylinder->addChild(trans);
+    cylinder->addChild(c);
+
+    SoMaterial * mat = new SoMaterial();
+    mat->diffuseColor.setValue(r,g,b);
+    mat->ambientColor.setValue(0.2, 0.2, 0.2);
+    mat->transparency.setValue(0);
+/*    // SoCylinder is oriented along y axis, so change this to z axis
+    // and also translate such that it extends along +z
+    Eigen::Quaterniond toZ = Eigen::Quaterniond::FromTwoVectors(Eigen::Vector3d(0,1,0), Eigen::Vector3d(0,0,1));
+    typedef Eigen::Transform<double, 3, Eigen::Affine> EigenTransform;
+    EigenTransform trans;
+    trans.setIdentity();
+    trans.translate(Eigen::Vector3d(0,0,height/2.0));
+    Eigen::Vector3d position=trans*pos;
+    Eigen::Quaterniond rotation = rot * toZ;*/
+    addVisual(addToNode, cylinder, pos, rot, radius, mat);
+}
+
+
 SoNode * Urdf2Inventor::getAsInventor(const LinkPtr& from_link, bool useScaleFactor)
 {
+    // ROS_INFO_STREAM("Get all visuals of "<<from_link->name<<" (parent joint "<<from_link->parent_joint->name<<")");
     SoNode * allVisuals = getAllVisuals(from_link, useScaleFactor ? scaleFactor : 1.0, useScaleFactor);
     if (!allVisuals)
     {
         ROS_ERROR("Could not get visuals");
         return NULL;
     }
+
+    // TODO: addOriginSphere and addOriginCylinder
+    // can be set true for testing. This could be parameterized
+    // at some point so that it can be set from outside, then
+    // also providing parameters for the sizes.
+    bool addOriginSphere=false;
+    bool active=isActive(from_link->parent_joint);
+    bool addOriginCylinder=true;
+    
+    if (addOriginSphere)
+    {
+        float rad = 0.008;
+        if (useScaleFactor) rad*=scaleFactor;
+        addSphere(allVisuals,Eigen::Vector3d(0,0,0), rad, 0,1,0);
+    }
+
+    if (addOriginCylinder)
+    {
+        float rad = 0.003;
+        float rotRad = 0.001;
+        float h=0.015;
+        float rotH=h*1.8;
+        float rx, gx, bx, ry, gy, by, rz, gz, bz, rtr, rtg, rtb;
+        rx = ry = rz = gx = gy = gz = bx = by = bz = rtr = rtg = rtb = 0;
+        // rotation axis pink
+        rtr = 1;
+        rtb = 1;
+        rx = 1;  // x axis red
+        gy = 1;  // y axis green
+        bz = 1;  // z axis blue
+        if (useScaleFactor)
+        {
+            rad*=scaleFactor;
+            h*=scaleFactor;
+            rotRad*=scaleFactor;
+            rotH*=scaleFactor;
+        }
+        if (active)
+        {
+            rad/=2;
+            h*=1.5;
+        }
+        Eigen::Quaterniond rot;
+        rot.setIdentity();
+        // z axis
+        addCylinder(allVisuals,Eigen::Vector3d(0,0,0), rot, rad, h ,rz,gz,bz);
+        
+        Eigen::Vector3d x(1,0,0);
+        Eigen::Vector3d y(0,1,0);
+        Eigen::Vector3d z(0,0,1);
+        // y axis
+        Eigen::Quaterniond q = Eigen::Quaterniond::FromTwoVectors(z, y);
+        addCylinder(allVisuals,Eigen::Vector3d(0,0,0), q, rad,h, ry, gy, by);
+        
+        // x axis
+        q = Eigen::Quaterniond::FromTwoVectors(z, x);
+        addCylinder(allVisuals,Eigen::Vector3d(0,0,0), q, rad,h, rx, gx, bx);
+        
+        Eigen::Vector3d rotAxis=getRotationAxis(from_link->parent_joint);
+        q = Eigen::Quaterniond::FromTwoVectors(z, rotAxis);
+        addCylinder(allVisuals,Eigen::Vector3d(0,0,0), q, rotRad,rotH,rtr,rtg,rtb);
+    }
+
     for (std::vector<JointPtr>::const_iterator pj = from_link->child_joints.begin();
             pj != from_link->child_joints.end(); pj++)
     {

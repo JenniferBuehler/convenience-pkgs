@@ -127,12 +127,13 @@ void InventorViewer::addVisual(SoNode * addToNode, SoNode * visual, const Eigen:
     node->addChild(transSep);
 }
 
-void InventorViewer::addSphere(SoNode * addToNode, const Eigen::Vector3d& pos, float radius)
+void InventorViewer::addSphere(SoNode * addToNode, const Eigen::Vector3d& pos, float radius,
+    float r, float g, float b)
 {
     SoSphere * s = new SoSphere();
     s->radius = radius;
     SoMaterial * mat = new SoMaterial();
-    mat->diffuseColor.setValue(1, 0, 0);
+    mat->diffuseColor.setValue(r,g,b);
     mat->ambientColor.setValue(0.2, 0.2, 0.2);
     addVisual(addToNode, s, pos, radius, mat);
 }

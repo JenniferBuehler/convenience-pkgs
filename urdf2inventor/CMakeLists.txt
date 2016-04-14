@@ -11,9 +11,9 @@ include(cmake/architecture_binding.cmake.in)
 # IMPORTANT: If you set this to false and are compiling
 # with catkin, uncomment the <*_depend> tags relating to
 # graspit in package.xml!
-if (NOT BUILD_IVCON)
+if (NOT DEFINED BUILD_IVCON)
     set (BUILD_IVCON true)
-endif (NOT BUILD_IVCON)
+endif (NOT DEFINED BUILD_IVCON)
 
 set (CATKIN_PKGS
   roscpp

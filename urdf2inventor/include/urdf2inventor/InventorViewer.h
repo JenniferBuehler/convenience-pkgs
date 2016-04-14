@@ -101,7 +101,8 @@ protected:
     /**
      * Adds a sphere to the model at this pose. Uses \e addVisual to do this.
      */
-    void addSphere(SoNode * node, const Eigen::Vector3d& pos, float _radius);
+    void addSphere(SoNode * node, const Eigen::Vector3d& pos, float _radius,
+            float r=1, float g=0, float b=0);
 
     /**
      * Calculates the correct face normal of the pick point.

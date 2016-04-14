@@ -201,10 +201,17 @@ public:
     bool printModel(const std::string& fromLink);
 
     /**
+     * Prints the joint names. Can't be const in this version because
+     * of the use of a recursive method.
+     */
+    void printJointNames(const std::string& fromLink);
+
+    /**
      * Returns all joint names in depth-frist search order starting from \e fromLink (or from root if
      * \e fromLink is empty)
      */
     bool getJointNames(const std::string& fromLink, const bool skipFixed, std::vector<std::string>& result);
+
 
     /**
      * Cleans up all temporary files written to disk.
@@ -386,6 +393,12 @@ protected:
     };
 
 
+    // Returns the joint's rotation axis as Eigen Vector
+    inline Eigen::Vector3d getRotationAxis(const JointPtr& j) const
+    {
+        return Eigen::Vector3d(j->axis.x, j->axis.y, j->axis.z);
+    }
+
     // Function for recursive getDependencyOrderedJoints
     int addJointLink(RecursionParamsPtr& p);
 
@@ -549,6 +562,7 @@ protected:
      */
     void applyTransform(LinkPtr& link, const EigenTransform& trans, bool preMult);
 
+    void applyTransform(const EigenTransform& t, urdf::Vector3& v);
 
 private:
 
