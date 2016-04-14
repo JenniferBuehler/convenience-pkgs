@@ -129,6 +129,9 @@ include_directories(
 ## either from message generation or dynamic reconfigure
 # add_dependencies(assimp_mesh_converter ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
+message("******* assimp libraries: ${ASSIMP_LIBRARIES}")
+message("******* assimp library: ${ASSIMP_LIBRARY}")
+
 ## Declare a C++ executable
 add_executable(mesh_converter src/converter.cpp)
 
@@ -139,6 +142,7 @@ add_dependencies(mesh_converter ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXP
 ## Specify libraries to link a library or executable target against
 target_link_libraries(mesh_converter
   ${catkin_LIBRARIES}
+  ${ASSIMP_LIBRARY}
   ${ASSIMP_LIBRARIES}
 )
 
