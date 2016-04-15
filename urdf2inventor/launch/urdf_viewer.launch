@@ -1,5 +1,41 @@
 <launch>
-    <arg name="urdf_file" default="$(find jaco_description)/urdf/jaco_robot.urdf"/>
+    <arg name="urdf_file"/>
+    
+    # set to true to specify a IV file (in argument iv_file)
+    # instead of URDF
+    <arg name="iv" default="false"/>
+    <arg name="iv_file" default=""/>
+   
+    # set to true to use root_link as a root for displaying 
+    <arg name="use_root_link" default="false"/>
+    <arg name="root_link" default=""/>
+    
+
+    # join fixed links before displaying URDF
+    <arg name="join_fixed_links" default="false"/>
+
+    # rotate all axes to z before displaying URDF
+    <arg name="rotate_axes_z" default="false"/>
+   
+    # true to display axes of local joint coordinate systems 
+    <arg name="display_axes" default="true"/>
+    <arg name="axes_radius" default="0.001"/>
+    <arg name="axes_length" default="0.015"/>
+
+
+    <arg if="$(arg use_root_link)" name="from_link" default="$(arg root_link)"/>
+    <arg unless="$(arg use_root_link)" name="from_link" default="root"/>
+	
+    <arg if="$(arg iv)" name="use_file" default="$(arg iv_file) --iv"/>
+    <arg unless="$(arg iv)" name="use_file" default="$(arg urdf_file) $(arg from_link)"/>
+
+
 	<node name="urdf_viewer" pkg="urdf2inventor" type="urdf_viewer" respawn="false"
-        output="screen" args="$(arg urdf_file)"/>
+        output="screen" args="$(arg use_file)">
+        <param name="join_fixed_links" value="$(arg join_fixed_links)"/>
+        <param name="rotate_axes_z" value="$(arg rotate_axes_z)"/>
+        <param name="display_axes" value="$(arg display_axes)"/>
+        <param name="axes_radius" value="$(arg axes_radius)"/>
+        <param name="axes_length" value="$(arg axes_length)"/>
+    </node>
 </launch>

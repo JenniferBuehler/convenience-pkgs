@@ -18,6 +18,7 @@
 
 #include <urdf2inventor/Helpers.h>
 #include <urdf2inventor/Urdf2Inventor.h>
+#include <urdf2inventor/IVHelpers.h>
 
 #include <string>
 #include <ros/ros.h>
@@ -28,12 +29,8 @@
 #include <Inventor/SoInput.h>   // for file reading
 #include <Inventor/actions/SoWriteAction.h>
 #include <Inventor/nodes/SoTransform.h>
-#include <Inventor/nodes/SoSeparator.h>
 #include <Inventor/nodes/SoSelection.h>
 #include <Inventor/nodekits/SoNodeKit.h>
-#include <Inventor/nodes/SoMaterial.h>
-#include <Inventor/nodes/SoSphere.h>
-#include <Inventor/nodes/SoCylinder.h>
 
 #include <map>
 #include <vector>
@@ -397,8 +394,8 @@ int Urdf2Inventor::getChildJoint(const JointPtr& joint, JointPtr& child)
         return -1;
     }
     if (childLink->child_joints.empty())
-    {
-        // this is the end link, and we've defined the end frame to be at the same location as the last joint,
+    {   // this is the end link, and we've defined the end
+        // frame to be at the same location as the last joint,
         // so no rotation should be needed?
         return 0;
     }
@@ -728,6 +725,7 @@ bool Urdf2Inventor::hasFixedJoints(LinkPtr& from_link)
 
 bool Urdf2Inventor::joinFixedLinks(const std::string& from_link)
 {
+    // ROS_INFO_STREAM("### Joining fixed links starting from "<<fromLinkName);
     LinkPtr link;
     this->robot.getLink(from_link, link);
     if (!link.get())
@@ -740,7 +738,7 @@ bool Urdf2Inventor::joinFixedLinks(const std::string& from_link)
 
 bool Urdf2Inventor::joinFixedLinks(LinkPtr& from_link)
 {
-    ROS_INFO_STREAM("Joining fixed links starting from "<<from_link->name
+    ROS_INFO_STREAM("### Joining fixed links starting from "<<from_link->name
         <<" with "<<from_link->child_links.size()<<" children");
 
     // call joinFixedLinksOnThis only from child
@@ -793,7 +791,7 @@ Urdf2Inventor::LinkPtr Urdf2Inventor::joinFixedLinksOnThis(LinkPtr& link)
 {
     if (!link.get()) return link;
 
-    ROS_INFO("--joinFixedLinksOnThis: Traverse %s",link->name.c_str());
+    // ROS_INFO("--joinFixedLinksOnThis: Traverse %s",link->name.c_str());
     JointPtr jointToParent = link->parent_joint;
     if (!jointToParent.get())
     {
@@ -825,8 +823,8 @@ Urdf2Inventor::LinkPtr Urdf2Inventor::joinFixedLinksOnThis(LinkPtr& link)
     }
 
     // this joint is fixed, so we will delete it
-
-    ROS_INFO("Joining fixed joint (%s) between %s and %s",jointToParent->name.c_str(), parentLink->name.c_str(),link->name.c_str());
+    // ROS_INFO("Joining fixed joint (%s) between %s and %s",jointToParent->name.c_str(), parentLink->name.c_str(),link->name.c_str());
+    
     // remove this link from the parent
     for (std::vector<LinkPtr >::iterator pc = parentLink->child_links.begin();
             pc != parentLink->child_links.end(); pc++)
@@ -854,7 +852,7 @@ Urdf2Inventor::LinkPtr Urdf2Inventor::joinFixedLinksOnThis(LinkPtr& link)
 
     // the local transfrom of the parent joint
     EigenTransform localTrans = getTransform(link);
-    ROS_INFO_STREAM("Transform between "<<parentLink->name<<" and "<<link->name<<": "<<localTrans);
+    // ROS_INFO_STREAM("Transform between "<<parentLink->name<<" and "<<link->name<<": "<<localTrans);
     // all this link's child joints now must receive the extra transform from this joint which we removed.
     // then, the joints should be added to the parent link
     for (std::vector<JointPtr >::iterator j = link->child_joints.begin(); j != link->child_joints.end(); j++)
@@ -870,17 +868,17 @@ Urdf2Inventor::LinkPtr Urdf2Inventor::joinFixedLinksOnThis(LinkPtr& link)
         jTrans = localTrans * jTrans;
         setTransform(jTrans, child);
         
+#if 1
         EigenTransform rotAxTrans=jTrans.inverse();
-#if 0
-        ROS_INFO_STREAM("Transforming rotation axis by "<<rotAxTrans);
-        ROS_INFO_STREAM("Old child axis of "<<child->name<<": "<<child->axis);
+        // ROS_INFO_STREAM("Transforming rotation axis by "<<rotAxTrans);
+        // ROS_INFO_STREAM("Old child axis of "<<child->name<<": "<<child->axis);
         applyTransform(rotAxTrans,child->axis); 
         /*Eigen::Vector3d childAxis(child->axis.x, child->axis.y, child->axis.z);
         childAxis.normalize();
         child->axis.x=childAxis.x();
         child->axis.y=childAxis.y();
         child->axis.z=childAxis.z();*/
-        ROS_INFO_STREAM("New child axis of "<<child->name<<": "<<child->axis);
+        // ROS_INFO_STREAM("New child axis of "<<child->name<<": "<<child->axis);
 #endif
         // add this child joint to the parent
         child->parent_link_name = parentLink->name;
@@ -1108,48 +1106,11 @@ bool Urdf2Inventor::writeInventorFileString(SoNode * node, std::string& result)
     return true;
 }
 
-SoSeparator * Urdf2Inventor::addSubNode(SoNode * addAsChild, SoNode* parent, SoTransform * trans)
-{
-    SoSeparator * sep = dynamic_cast<SoSeparator*>(parent);
-    if (!sep)
-    {
-        ROS_ERROR("parent is not a separator");
-        return NULL;
-    }
-
-    SoSeparator * sepChild = dynamic_cast<SoSeparator*>(addAsChild);
-    if (!sepChild)
-    {
-        ROS_ERROR("child is not a separator");
-        return NULL;
-    }
-
-    // ROS_WARN_STREAM("######### Adding transform "<<trans->translation<<", "<<trans->rotation);
-
-    SoSeparator * transNode = new SoSeparator();
-    transNode->addChild(trans);
-    transNode->addChild(sepChild);
-
-    sep->addChild(transNode);
-    return sep;
-}
-
-SoSeparator * Urdf2Inventor::addSubNode(SoNode * addAsChild, SoNode* parent, EigenTransform& eTrans)
-{
-    SoTransform * transform = getTransform(eTrans);
-    return addSubNode(addAsChild, parent, transform);
-}
-
-
 SoNode * Urdf2Inventor::getAllVisuals(const LinkPtr link, double scale_factor, bool scaleUrdfTransforms)
 {
     SoNodeKit::init();
     SoNode * allVisuals = new SoSeparator();
     allVisuals->ref();
-/*    SoMaterial * mat = new SoMaterial();
-    mat->diffuseColor.setValue(0,0,1);
-    mat->ambientColor.setValue(0.2, 0.2, 0.2);
-    allVisuals->addChild(mat);*/
     std::string linkName = link->name;
     unsigned int i = 0;
     for (std::vector<VisualPtr >::const_iterator vit = link->visual_array.begin();
@@ -1180,7 +1141,7 @@ SoNode * Urdf2Inventor::getAllVisuals(const LinkPtr link, double scale_factor, b
             std::stringstream str;
             str << "_visual_" << i << "_" << linkName;
             somesh->setName(str.str().c_str());
-            allVisuals = addSubNode(somesh, allVisuals, vTransform);
+            allVisuals = urdf2inventor::addSubNode(somesh, allVisuals, vTransform);
         }
         else
         {
@@ -1198,7 +1159,7 @@ SoNode * Urdf2Inventor::getAllVisuals(const LinkPtr link, double scale_factor, b
     return allVisuals;
 }
 
-SoTransform * Urdf2Inventor::getTransform(const EigenTransform& eTrans) const
+/*SoTransform * Urdf2Inventor::getTransform(const EigenTransform& eTrans) const
 {
     SoTransform * transform = new SoTransform();
 
@@ -1211,7 +1172,7 @@ SoTransform * Urdf2Inventor::getTransform(const EigenTransform& eTrans) const
     rotation.setValue(vQuat.x(), vQuat.y(), vQuat.z(), vQuat.w());
     transform->rotation = rotation;
     return transform;
-}
+}*/
 
 Urdf2Inventor::LinkPtr Urdf2Inventor::getLink(const std::string& name)
 {
@@ -1364,6 +1325,7 @@ bool Urdf2Inventor::jointTransformForAxis(const urdf::Joint& joint,
 
 bool Urdf2Inventor::allRotationsToAxis(const std::string& fromLinkName, const Eigen::Vector3d& axis)
 {
+    ROS_INFO_STREAM("### Transforming all rotations starting from "<<fromLinkName<<" to axis "<<axis);
     LinkPtr from_link;
     getRobot().getLink(fromLinkName, from_link);
     if (!from_link.get())
@@ -1511,85 +1473,45 @@ SoNode * Urdf2Inventor::loadAndGetAsInventor(const std::string& urdfFilename, co
         ROS_INFO_STREAM("Joint names starting from "<<rootLink<<":");
         for (int i=0; i<jointNames.size(); ++i) ROS_INFO_STREAM(jointNames[i]);
     }
-    return getAsInventor(rootLink, useScaleFactor);
+    return getAsInventor(rootLink, useScaleFactor, addAxes, axesRadius, axesLength);
 }
 
 
-void addVisual(SoNode * addToNode, SoNode * visual, const Eigen::Vector3d& pos, const Eigen::Quaterniond& rot, float _marker_size, SoMaterial * mat)
+void Urdf2Inventor::addLocalAxes(const LinkConstPtr& link, SoSeparator * addToNode, bool useScaleFactor,
+    float _axesRadius, float _axesLength) const
 {
-    SoSeparator * node = dynamic_cast<SoSeparator*>(addToNode);
-    if (!node)
+    bool active=isActive(link->parent_joint);
+    float rad = _axesRadius;
+    float rotRad = _axesRadius/3;
+    float h=_axesLength;
+    float rotH=h*1.8;
+    float rtr, rtg, rtb;
+    // rotation axis pink
+    rtr = rtb = 1;
+    rtg = 0;
+    if (useScaleFactor)
     {
-        ROS_ERROR_STREAM("The node is not a separator, this case should be handeled separately. "
-                         << "For now, no markers are displayed.");
-        return;
+        rad*=scaleFactor;
+        h*=scaleFactor;
+        rotRad*=scaleFactor;
+        rotH*=scaleFactor;
     }
-
-    SoTransform * trans = new SoTransform();
-    trans->translation.setValue(pos.x(), pos.y(), pos.z());
-    trans->rotation.setValue(rot.x(), rot.y(), rot.z(), rot.w());
-    SoSeparator * transSep = new SoSeparator();
-    transSep->addChild(trans);
-    transSep->addChild(visual);
-    if (mat) node->addChild(mat);
-    node->addChild(transSep);
-}
-
-void addSphere(SoNode * addToNode, const Eigen::Vector3d& pos, float radius,
-    float r, float g, float b)
-{
-    SoSphere * s = new SoSphere();
-    s->radius = radius;
-    SoMaterial * mat = new SoMaterial();
-    mat->diffuseColor.setValue(r,g,b);
-    mat->ambientColor.setValue(0.2, 0.2, 0.2);
-    Eigen::Quaterniond rot;
-    rot.setIdentity();
-    addVisual(addToNode, s, pos, rot, radius, mat);
-}
-
-/**
- * Add a cylinder oriented around z axis, pointed along +z, originating at \e pos
- */
-void addCylinder(SoNode * addToNode, const Eigen::Vector3d& pos,
-    const Eigen::Quaterniond rot,
-    float radius, float height,
-    float r, float g, float b)
-{
-    SoCylinder * c = new SoCylinder();
-    c->radius = radius;
-    c->height = height;
-
-
-    // SoCylinder is oriented along y axis, so change this to z axis
-    // and also translate such that it extends along +z
-    Eigen::Quaterniond toZ = Eigen::Quaterniond::FromTwoVectors(Eigen::Vector3d(0,1,0), Eigen::Vector3d(0,0,1));
-    typedef Eigen::Transform<double, 3, Eigen::Affine> EigenTransform;
-    SoTransform * trans = new SoTransform();
-    trans->translation.setValue(0,0,height/2);
-    trans->rotation.setValue(toZ.x(), toZ.y(), toZ.z(), toZ.w());
-    SoSeparator * cylinder = new SoSeparator();
-    cylinder->addChild(trans);
-    cylinder->addChild(c);
-
-    SoMaterial * mat = new SoMaterial();
-    mat->diffuseColor.setValue(r,g,b);
-    mat->ambientColor.setValue(0.2, 0.2, 0.2);
-    mat->transparency.setValue(0);
-/*    // SoCylinder is oriented along y axis, so change this to z axis
-    // and also translate such that it extends along +z
-    Eigen::Quaterniond toZ = Eigen::Quaterniond::FromTwoVectors(Eigen::Vector3d(0,1,0), Eigen::Vector3d(0,0,1));
-    typedef Eigen::Transform<double, 3, Eigen::Affine> EigenTransform;
-    EigenTransform trans;
-    trans.setIdentity();
-    trans.translate(Eigen::Vector3d(0,0,height/2.0));
-    Eigen::Vector3d position=trans*pos;
-    Eigen::Quaterniond rotation = rot * toZ;*/
-    addVisual(addToNode, cylinder, pos, rot, radius, mat);
+    if (!active)
+    {
+        rad/=2;
+        h*=1.5;
+    }
+    urdf2inventor::addLocalAxes(addToNode, rad, h);
+   
+    Eigen::Vector3d rotAxis=getRotationAxis(link->parent_joint);
+    Eigen::Vector3d z(0,0,1);
+    Eigen::Quaterniond q = Eigen::Quaterniond::FromTwoVectors(z, rotAxis);
+    urdf2inventor::addCylinder(addToNode,Eigen::Vector3d(0,0,0), q, rotRad,rotH,rtr,rtg,rtb);
 }
 
 
-SoNode * Urdf2Inventor::getAsInventor(const LinkPtr& from_link, bool useScaleFactor)
+SoNode * Urdf2Inventor::getAsInventor(const LinkPtr& from_link, bool useScaleFactor,
+    bool _addAxes, float _axesRadius, float _axesLength)
 {
     // ROS_INFO_STREAM("Get all visuals of "<<from_link->name<<" (parent joint "<<from_link->parent_joint->name<<")");
     SoNode * allVisuals = getAllVisuals(from_link, useScaleFactor ? scaleFactor : 1.0, useScaleFactor);
@@ -1599,66 +1521,17 @@ SoNode * Urdf2Inventor::getAsInventor(const LinkPtr& from_link, bool useScaleFac
         return NULL;
     }
 
-    // TODO: addOriginSphere and addOriginCylinder
-    // can be set true for testing. This could be parameterized
-    // at some point so that it can be set from outside, then
-    // also providing parameters for the sizes.
-    bool addOriginSphere=false;
-    bool active=isActive(from_link->parent_joint);
-    bool addOriginCylinder=true;
-    
-    if (addOriginSphere)
+    if (_addAxes) 
     {
-        float rad = 0.008;
-        if (useScaleFactor) rad*=scaleFactor;
-        addSphere(allVisuals,Eigen::Vector3d(0,0,0), rad, 0,1,0);
-    }
-
-    if (addOriginCylinder)
-    {
-        float rad = 0.003;
-        float rotRad = 0.001;
-        float h=0.015;
-        float rotH=h*1.8;
-        float rx, gx, bx, ry, gy, by, rz, gz, bz, rtr, rtg, rtb;
-        rx = ry = rz = gx = gy = gz = bx = by = bz = rtr = rtg = rtb = 0;
-        // rotation axis pink
-        rtr = 1;
-        rtb = 1;
-        rx = 1;  // x axis red
-        gy = 1;  // y axis green
-        bz = 1;  // z axis blue
-        if (useScaleFactor)
+        SoSeparator * _allVisuals = dynamic_cast<SoSeparator*>(allVisuals);
+        if (!_allVisuals)
         {
-            rad*=scaleFactor;
-            h*=scaleFactor;
-            rotRad*=scaleFactor;
-            rotH*=scaleFactor;
+            ROS_WARN_STREAM("The node for link "<<from_link->name<<" is not a separator, so cannot add axes");
         }
-        if (active)
+        else 
         {
-            rad/=2;
-            h*=1.5;
+            addLocalAxes(from_link, _allVisuals, useScaleFactor, _axesRadius, _axesLength);
         }
-        Eigen::Quaterniond rot;
-        rot.setIdentity();
-        // z axis
-        addCylinder(allVisuals,Eigen::Vector3d(0,0,0), rot, rad, h ,rz,gz,bz);
-        
-        Eigen::Vector3d x(1,0,0);
-        Eigen::Vector3d y(0,1,0);
-        Eigen::Vector3d z(0,0,1);
-        // y axis
-        Eigen::Quaterniond q = Eigen::Quaterniond::FromTwoVectors(z, y);
-        addCylinder(allVisuals,Eigen::Vector3d(0,0,0), q, rad,h, ry, gy, by);
-        
-        // x axis
-        q = Eigen::Quaterniond::FromTwoVectors(z, x);
-        addCylinder(allVisuals,Eigen::Vector3d(0,0,0), q, rad,h, rx, gx, bx);
-        
-        Eigen::Vector3d rotAxis=getRotationAxis(from_link->parent_joint);
-        q = Eigen::Quaterniond::FromTwoVectors(z, rotAxis);
-        addCylinder(allVisuals,Eigen::Vector3d(0,0,0), q, rotRad,rotH,rtr,rtg,rtb);
     }
 
     for (std::vector<JointPtr>::const_iterator pj = from_link->child_joints.begin();
@@ -1666,7 +1539,7 @@ SoNode * Urdf2Inventor::getAsInventor(const LinkPtr& from_link, bool useScaleFac
     {
         LinkPtr childLink;
         this->robot.getLink((*pj)->child_link_name, childLink);
-        SoNode * childNode = getAsInventor(childLink, useScaleFactor);
+        SoNode * childNode = getAsInventor(childLink, useScaleFactor, _addAxes, _axesRadius, _axesLength);
         if (!childNode)
         {
             ROS_ERROR_STREAM("Could not get child node for "<<childLink->name);
@@ -1678,14 +1551,15 @@ SoNode * Urdf2Inventor::getAsInventor(const LinkPtr& from_link, bool useScaleFac
         // ROS_WARN_STREAM("Transform joint "<<(*pj)->name<<": "<<jointTransform);
         //ROS_INFO_STREAM("Adding sub node for "<<childLink->name);
 
-        allVisuals = addSubNode(childNode, allVisuals, jointTransform);
+        allVisuals = urdf2inventor::addSubNode(childNode, allVisuals, jointTransform);
     }
 
     return allVisuals;
 }
 
 
-SoNode * Urdf2Inventor::getAsInventor(const std::string& fromLink, bool useScaleFactor)
+SoNode * Urdf2Inventor::getAsInventor(const std::string& fromLink, bool useScaleFactor,
+    bool _addAxes, float _axesRadius, float _axesLength)
 {
     std::string rootLink=fromLink;
     if (rootLink.empty()){
@@ -1699,7 +1573,7 @@ SoNode * Urdf2Inventor::getAsInventor(const std::string& fromLink, bool useScale
         ROS_ERROR_STREAM("Cannot find link '"<<rootLink<<"'");
         return NULL;
     }
-    return getAsInventor(from_link, useScaleFactor);
+    return getAsInventor(from_link, useScaleFactor, _addAxes, _axesRadius, _axesLength);
 }
 
 
@@ -1722,7 +1596,7 @@ bool Urdf2Inventor::writeAsInventor(const std::string& ivFilename, const std::st
 
 bool Urdf2Inventor::writeAsInventor(const std::string& ivFilename, const LinkPtr& from_link, bool useScaleFactor)
 {
-    SoNode * inv = getAsInventor(from_link, useScaleFactor);
+    SoNode * inv = getAsInventor(from_link, useScaleFactor, addAxes, axesRadius, axesLength);
     if (!inv)
     {
         ROS_ERROR("could not generate overall inventor file");

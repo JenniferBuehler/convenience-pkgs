@@ -107,39 +107,6 @@ void InventorViewer::runViewer()
     SoQt::mainLoop();
 }
 
-
-void InventorViewer::addVisual(SoNode * addToNode, SoNode * visual, const Eigen::Vector3d& pos, float _marker_size, SoMaterial * mat)
-{
-    SoSeparator * node = dynamic_cast<SoSeparator*>(addToNode);
-    if (!node)
-    {
-        ROS_ERROR_STREAM("The node is not a separator, this case should be handeled separately. "
-                         << "For now, no markers are displayed.");
-        return;
-    }
-
-    SoTransform * trans = new SoTransform();
-    trans->translation.setValue(pos.x(), pos.y(), pos.z());
-    SoSeparator * transSep = new SoSeparator();
-    transSep->addChild(trans);
-    transSep->addChild(visual);
-    if (mat) node->addChild(mat);
-    node->addChild(transSep);
-}
-
-void InventorViewer::addSphere(SoNode * addToNode, const Eigen::Vector3d& pos, float radius,
-    float r, float g, float b)
-{
-    SoSphere * s = new SoSphere();
-    s->radius = radius;
-    SoMaterial * mat = new SoMaterial();
-    mat->diffuseColor.setValue(r,g,b);
-    mat->ambientColor.setValue(0.2, 0.2, 0.2);
-    addVisual(addToNode, s, pos, radius, mat);
-}
-
-
-
 bool InventorViewer::computeCorrectFaceNormal(const SoPickedPoint * pick, bool ccw_face, Eigen::Vector3d& normal)
 {
     const SoDetail *pickDetail = pick->getDetail();

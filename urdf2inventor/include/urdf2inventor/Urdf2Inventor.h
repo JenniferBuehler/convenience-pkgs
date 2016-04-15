@@ -32,6 +32,10 @@
 #include <Eigen/Geometry>
 
 #include <Inventor/nodes/SoTransform.h>
+#include <Inventor/nodes/SoSeparator.h>
+#include <Inventor/nodes/SoMaterial.h>
+#include <Inventor/nodes/SoSphere.h>
+#include <Inventor/nodes/SoCylinder.h>
 
 #include <urdf2inventor/ConversionResult.h>
 #include <architecture_binding/SharedPtr.h>
@@ -89,10 +93,20 @@ public:
     /**
      * \param _scaleFactor the graspit model might have to be scaled (the urdf model is in meters, graspit! in millimeters).
      * This can be specified with this scale factor.
+     * \param _addAxes default value: add the local coordinate system axes of the links to the inventor nodes. 
+     *      z axis is displayed blue, y axis green, x axis red, and the rotation axis pink.
+     *      Fixed joints axes will be artificially altered to be slightly longer and thinner, so a distinction is
+     *      visible.
+     * \param _axesRadius default value: radius of the axes, if \e _addAxes is true 
+     * \param _axesLength default value: length of the axes, if \e _addAxes is true
      */
-    explicit Urdf2Inventor(float _scaleFactor = 1):
+    explicit Urdf2Inventor(float _scaleFactor = 1, bool _addAxes=false, float _axesRadius = 0.003, float _axesLength=0.015):
         scaleFactor(_scaleFactor),
-        isScaled(false) {}
+        isScaled(false),
+        addAxes(_addAxes),
+        axesRadius(_axesRadius),
+        axesLength(_axesLength)
+     {}
 
     ~Urdf2Inventor()
     {
@@ -150,8 +164,16 @@ public:
      * \param useScaleFactor if set to true, the model is scaled up using scale factor set in constructor.
      * \param fromLink if empty string, the root link in the URDF is going to be used. Otherwise, a link
      *      name can be set here which will return the model starting from this link name.
+     *
+     * \param _addAxes add the local coordinate system axes of the links to the inventor nodes. 
+     *      z axis is displayed blue, y axis green, x axis red, and the rotation axis pink.
+     *      Fixed joints axes will be artificially altered to be slightly longer and thinner, so a distinction is
+     *      visible.
+     * \param _axesRadius radius of the axes, if \e _addAxes is true 
+     * \param _axesLength length of the axes, if \e _addAxes is true
      */
-    SoNode * getAsInventor(const std::string& fromLink="", bool useScaleFactor=true);
+    SoNode * getAsInventor(const std::string& fromLink, bool useScaleFactor,
+        bool _addAxes, float _axesRadius, float _axesLength);
 
     /**
      * writes all elements down from \e fromLink to files in inventor format.
@@ -564,6 +586,10 @@ protected:
 
     void applyTransform(const EigenTransform& t, urdf::Vector3& v);
 
+    void addLocalAxes(const LinkConstPtr& link, SoSeparator * addToNode, bool useScaleFactor,
+        float _axesRadius, float _axesLength) const;
+
+ 
 private:
 
     /**
@@ -656,25 +682,14 @@ private:
     SoNode * getAllVisuals(const LinkPtr link, double scale_factor, bool scaleUrdfTransforms = false);
 
     // Returns the transform eTrans as SoTransform node
-    SoTransform * getTransform(const EigenTransform& eTrans) const;
-
-    /**
-     * Adds a SoNode (addAsChild) as a child (to parent), transformed by the given transform (eTrans)
-     * and returns the SoSeparator containing parent with the child.
-     */
-    SoSeparator * addSubNode(SoNode * addAsChild, SoNode* parent, EigenTransform& eTrans);
-
-    /**
-     * Adds a SoNode (addAsChild) as a child (to parent), transformed by the given transform (eTrans) and
-     * returns the SoSeparator containing parent with the child.
-     */
-    SoSeparator * addSubNode(SoNode * addAsChild, SoNode* parent, SoTransform * trans);
+    //SoTransform * getTransform(const EigenTransform& eTrans) const;
 
     /**
      * Recursive function which returns an inventor node for all links down from (and including) from_link.
      * \param useScaleFactor if set to true, the model is scaled up using scale factor set in constructor.
      */
-    SoNode * getAsInventor(const LinkPtr& from_link, bool useScaleFactor);
+    SoNode * getAsInventor(const LinkPtr& from_link, bool useScaleFactor, 
+        bool _addAxes, float _axesRadius, float _axesLength);
 
     /**
      * Writes the contents of SoNode into the file of given name.
@@ -704,6 +719,11 @@ private:
     // The graspit model might ahve to be scaled compared to the urdf model, this is the scale factor which does that.
     float scaleFactor;
     bool isScaled;
+
+
+    bool addAxes;
+    float axesRadius;
+    float axesLength;
 };
 
 }  //  namespace urdf2inventor

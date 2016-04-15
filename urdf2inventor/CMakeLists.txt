@@ -98,6 +98,7 @@ include_directories(
 add_library(urdf2inventor
   src/Urdf2Inventor.cpp
   src/Helpers.cpp
+  src/IVHelpers.cpp
   src/InventorViewer.cpp
 )
 
