@@ -867,8 +867,7 @@ Urdf2Inventor::LinkPtr Urdf2Inventor::joinFixedLinksOnThis(LinkPtr& link)
 
         jTrans = localTrans * jTrans;
         setTransform(jTrans, child);
-        
-#if 1
+#if 0
         EigenTransform rotAxTrans=jTrans.inverse();
         // ROS_INFO_STREAM("Transforming rotation axis by "<<rotAxTrans);
         // ROS_INFO_STREAM("Old child axis of "<<child->name<<": "<<child->axis);

@@ -129,8 +129,8 @@ include_directories(
 ## either from message generation or dynamic reconfigure
 # add_dependencies(assimp_mesh_converter ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-message("******* assimp libraries: ${ASSIMP_LIBRARIES}")
-message("******* assimp library: ${ASSIMP_LIBRARY}")
+# message("******* assimp libraries: ${ASSIMP_LIBRARIES}")
+# message("******* assimp library: ${ASSIMP_LIBRARY}")
 
 ## Declare a C++ executable
 add_executable(mesh_converter src/converter.cpp)
