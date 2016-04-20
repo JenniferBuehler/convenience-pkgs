@@ -67,10 +67,8 @@ namespace urdf2inventor
  */
 class Urdf2Inventor
 {
-protected:
-    typedef Eigen::Transform<double, 3, Eigen::Affine> EigenTransform;
-
 public:
+    typedef Eigen::Transform<double, 3, Eigen::Affine> EigenTransform;
     typedef architecture_binding::shared_ptr<const urdf::Joint>::type JointConstPtr;
     typedef architecture_binding::shared_ptr<const urdf::Link>::type LinkConstPtr;
     typedef architecture_binding::shared_ptr<urdf::Joint>::type JointPtr;
@@ -155,7 +153,7 @@ public:
      * \param fromLink if empty string, the root link in the URDF is going to be used. Otherwise, a link
      *      name can be set here which will return the model starting from this link name.
      */
-    SoNode * loadAndGetAsInventor(const std::string& filename, const std::string fromLink="", bool useScaleFactor = true);
+    // SoNode * loadAndGetAsInventor(const std::string& filename, const std::string fromLink="", bool useScaleFactor = true);
 
     /**
      * Returns an inventor node for all links down from (and including) \e from_link. The model needs to be loaded
@@ -165,23 +163,32 @@ public:
      * \param fromLink if empty string, the root link in the URDF is going to be used. Otherwise, a link
      *      name can be set here which will return the model starting from this link name.
      *
-     * \param _addAxes add the local coordinate system axes of the links to the inventor nodes. 
+     * \param addAxes add the local coordinate system axes of the links to the inventor nodes. 
      *      z axis is displayed blue, y axis green, x axis red, and the rotation axis pink.
      *      Fixed joints axes will be artificially altered to be slightly longer and thinner, so a distinction is
      *      visible.
-     * \param _axesRadius radius of the axes, if \e _addAxes is true 
-     * \param _axesLength length of the axes, if \e _addAxes is true
+     * \param axesRadius radius of the axes, if \e _addAxes is true 
+     * \param axesLength length of the axes, if \e _addAxes is true
+     * \param addVisualTransform this transform will be post-multiplied on all links' **visuals** (not links!) local
+     *      transform (their "origin"). This can be used to correct transformation errors which may have been 
+     *      introduced in converting meshes from one format to the other, losing orientation information
+     *      (for example, .dae has an "up vector" definition which may have been ignored)
      */
     SoNode * getAsInventor(const std::string& fromLink, bool useScaleFactor,
-        bool _addAxes, float _axesRadius, float _axesLength);
+        bool addAxes, float axesRadius, float axesLength, const EigenTransform& addVisualTransform);
 
     /**
      * writes all elements down from \e fromLink to files in inventor format.
      * \param outputFilename has to be an inventor filename
      * \param fromLink if empty string, the root link in the URDF is going to be used as starting point. Otherwise, a link
      *      name can be set here which will write the model starting from this link name.
+     * \param addVisualTransform this transform will be post-multiplied on all links' **visuals** (not links!) local
+     *      transform (their "origin"). This can be used to correct transformation errors which may have been 
+     *      introduced in converting meshes from one format to the other, losing orientation information
+     *      (for example, .dae has an "up vector" definition which may have been ignored)
      */
-    bool writeAsInventor(const std::string& outputFilename,  const std::string& fromLink = "", bool useScaleFactor = true);
+    bool writeAsInventor(const std::string& outputFilename,  const std::string& fromLink /*= ""*/, 
+        bool useScaleFactor /*= true*/, const EigenTransform& addVisualTransform);
 
     /**
      * Convenience method: loads the URDF file, then joins fixed links (only if \e joinFixed) and then converts the URDF file to
@@ -194,10 +201,15 @@ public:
     /**
      * \param rootLink if empty string, the root link in the URDF is going to be used. Otherwise, a link
      *      name can be set here which will convert the model starting from this link name.
+     * \param addVisualTransform this transform will be post-multiplied on all links' **visuals** (not links!) local
+     *      transform (their "origin"). This can be used to correct transformation errors which may have been 
+     *      introduced in converting meshes from one format to the other, losing orientation information
+     *      (for example, .dae has an "up vector" definition which may have been ignored)
      */
-    ConversionParametersPtr getBasicConversionParams(const std::string& rootLink="", const std::string& material="plastic")
+    ConversionParametersPtr getBasicConversionParams(const std::string& rootLink/*=""*/,
+        const std::string& material/*="plastic"*/, const EigenTransform& addVisualTransform)
     {
-        return ConversionParametersPtr(new ConversionParameters(rootLink,material));
+        return ConversionParametersPtr(new ConversionParameters(rootLink,material, addVisualTransform));
     }
 
     /**
@@ -255,6 +267,9 @@ protected:
     typedef architecture_binding::shared_ptr<urdf::Visual>::type VisualPtr;
     typedef architecture_binding::shared_ptr<urdf::Geometry>::type GeometryPtr;
     typedef architecture_binding::shared_ptr<urdf::Mesh>::type MeshPtr;
+    typedef architecture_binding::shared_ptr<urdf::Sphere>::type SpherePtr;
+    typedef architecture_binding::shared_ptr<urdf::Box>::type BoxPtr;
+    typedef architecture_binding::shared_ptr<urdf::Cylinder>::type CylinderPtr;
     typedef architecture_binding::shared_ptr<urdf::Collision>::type CollisionPtr;
 
     /**
@@ -307,8 +322,8 @@ protected:
     {
     public:
         typedef architecture_binding::shared_ptr<FactorRecursionParams>::type Ptr;
-        FactorRecursionParams(): RecursionParams(), factor(1.0) {}
-        FactorRecursionParams(Urdf2Inventor::LinkPtr& _parent,
+        explicit FactorRecursionParams(): RecursionParams(), factor(1.0) {}
+        explicit FactorRecursionParams(Urdf2Inventor::LinkPtr& _parent,
                               Urdf2Inventor::LinkPtr& _link, int _level, double _factor):
             RecursionParams(_parent, _link, _level),
             factor(_factor) {}
@@ -331,7 +346,7 @@ protected:
     {
     public:
         typedef architecture_binding::shared_ptr<StringVectorRecursionParams>::type Ptr;
-        StringVectorRecursionParams(const bool _skipFixed):
+        explicit StringVectorRecursionParams(const bool _skipFixed):
             RecursionParams(),
             skipFixed(_skipFixed) {}
 /*        StringVectorRecursionParams(Urdf2Inventor::LinkPtr& _parent,
@@ -348,6 +363,8 @@ protected:
         // skip the fixed joints and collect only movable ones
         bool skipFixed;
         std::vector<std::string> names;
+    private:
+        explicit StringVectorRecursionParams(){}
     };
 
 
@@ -358,32 +375,43 @@ protected:
     {
     public:
         typedef architecture_binding::shared_ptr<MeshConvertRecursionParams>::type Ptr;
-        MeshConvertRecursionParams(): FactorRecursionParams() {}
-
         /**
          * \param material the material to use in the converted mesh
          */
-        MeshConvertRecursionParams(Urdf2Inventor::LinkPtr& _parent,
+        explicit MeshConvertRecursionParams(Urdf2Inventor::LinkPtr& _parent,
                                    Urdf2Inventor::LinkPtr& _link,
                                    int _level,
                                    double _scale_factor,
-                                   const std::string& _material):
+                                   const std::string& _material,
+                                   const EigenTransform& _addVisualTransform):
             FactorRecursionParams(_parent, _link, _level, _scale_factor),
-            material(_material) {}
+            material(_material), addVisualTransform(_addVisualTransform) {}
 
-        MeshConvertRecursionParams(double _scale_factor, const std::string _material):
+        explicit MeshConvertRecursionParams(double _scale_factor, const std::string _material,
+                                   const EigenTransform& _addVisualTransform):
             FactorRecursionParams(_scale_factor),
-            material(_material) {}
+            material(_material), addVisualTransform(_addVisualTransform) {}
         MeshConvertRecursionParams(const MeshConvertRecursionParams& o):
             FactorRecursionParams(o),
             material(o.material),
-            resultMeshes(o.resultMeshes) {}
+            resultMeshes(o.resultMeshes),
+            addVisualTransform(o.addVisualTransform) {}
         virtual ~MeshConvertRecursionParams() {}
 
         std::string material;
+       
+        /** 
+         * this transform will be post-multiplied on all links' **visuals** (not links!) local
+         * transform (their "origin"). This can be used to correct transformation errors which may have been 
+         * introduced in converting meshes from one format to the other, losing orientation information
+         * (for example, .dae has an "up vector" definition which may have been ignored)
+         */
+        EigenTransform addVisualTransform;
 
         // the resulting meshes (inventor files), indexed by the link name
         std::map<std::string, MeshFormat> resultMeshes;
+    private:
+        explicit MeshConvertRecursionParams(){}
     };
   
 
@@ -489,8 +517,13 @@ protected:
      * \param material the material to use in the converted format
      * \param meshes the resulting meshes (inventor files), indexed by the link names
      * \param meshDescXML the resulting GraspIt! XML description files for the meshes, indexed by the link names
+     * \param addVisualTransform this transform will be post-multiplied on all links' **visuals** (not links!) local
+     *      transform (their "origin"). This can be used to correct transformation errors which may have been 
+     *      introduced in converting meshes from one format to the other, losing orientation information
+     *      (for example, .dae has an "up vector" definition which may have been ignored)
      */
     bool convertMeshes(const std::string& fromLinkName, const std::string& material,
+                       const EigenTransform& addVisualTransform,
                        std::map<std::string, MeshFormat>& meshes);
 
 
@@ -519,6 +552,7 @@ protected:
     // Returns if this is an active joint in the URDF description
     inline bool isActive(const JointPtr& joint) const
     {
+        if (!joint.get()) return false;
         return (joint->type == urdf::Joint::REVOLUTE) ||
                (joint->type == urdf::Joint::CONTINUOUS) ||
                (joint->type == urdf::Joint::PRISMATIC);
@@ -539,23 +573,14 @@ protected:
     EigenTransform getTransform(const urdf::Pose& p) const;
 
     // Get joint transform to parent
-    inline EigenTransform getTransform(const JointConstPtr& joint) const
-    {
-        return getTransform(joint->parent_to_joint_origin_transform);
-    }
+    EigenTransform getTransform(const JointConstPtr& joint) const; 
 
     // Get transform to parent link (transform of link's parent joint)
-    inline EigenTransform getTransform(const LinkConstPtr& link) const
-    {
-        return getTransform(link->parent_joint);
-    }
+    EigenTransform getTransform(const LinkConstPtr& link) const; 
 
     Eigen::Matrix4d getTransformMatrix(const LinkConstPtr& from_link,  const LinkConstPtr& to_link) const;
 
-    inline EigenTransform getTransform(const LinkConstPtr& from_link,  const LinkConstPtr& to_link) const
-    {
-        return EigenTransform(getTransformMatrix(from_link, to_link));
-    }
+    EigenTransform getTransform(const LinkConstPtr& from_link,  const LinkConstPtr& to_link) const; 
 
     EigenTransform getTransform(const LinkPtr& from_link,  const JointPtr& to_joint) const;
 
@@ -678,18 +703,24 @@ private:
      * scale_factor in its translations
      * \param scaleUrdfTransforms set to true if the transforms coming from this urdf model should be scaled up as well.
      * If this is false, only the meshes are scaled.
+     * \param addTransform this transform will be post-multiplied on all links' **visuals** (not links!) local
+     *      transform (their "origin"). This can be used to correct transformation errors which may have been 
+     *      introduced in converting meshes from one format to the other, losing orientation information
+     *      (for example, .dae has an "up vector" definition which may have been ignored)
      */
-    SoNode * getAllVisuals(const LinkPtr link, double scale_factor, bool scaleUrdfTransforms = false);
+    SoNode * getAllVisuals(const LinkPtr link, double scale_factor,
+        const EigenTransform& addTransform,
+        bool scaleUrdfTransforms = false);
 
     // Returns the transform eTrans as SoTransform node
     //SoTransform * getTransform(const EigenTransform& eTrans) const;
 
     /**
      * Recursive function which returns an inventor node for all links down from (and including) from_link.
-     * \param useScaleFactor if set to true, the model is scaled up using scale factor set in constructor.
+     * See other getAsInventor() function.
      */
     SoNode * getAsInventor(const LinkPtr& from_link, bool useScaleFactor, 
-        bool _addAxes, float _axesRadius, float _axesLength);
+        bool _addAxes, float _axesRadius, float _axesLength, const EigenTransform& addTransform);
 
     /**
      * Writes the contents of SoNode into the file of given name.
@@ -706,7 +737,8 @@ private:
      * Writes all elements down from from_link to a file in inventor format.
      * \param outFilename has to be an inventor filename
      */
-    bool writeAsInventor(const std::string& outFilename, const LinkPtr& from_link, bool useScaleFactor = true);
+    bool writeAsInventor(const std::string& outFilename, const LinkPtr& from_link,
+        bool useScaleFactor /*= true*/, const EigenTransform& addTransform);
 
 
     bool hasChildLink(const LinkConstPtr& link, const std::string& childName) const;

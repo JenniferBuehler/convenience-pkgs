@@ -20,6 +20,8 @@
 #define URDF2INVENTOR_CONVERSIONRESULT_H
 // Copyright Jennifer Buehler
 
+#include <Eigen/Core>
+#include <Eigen/Geometry>
 #include <string>
 #include <map>
 
@@ -35,13 +37,16 @@ namespace urdf2inventor
 class ConversionParameters
 {
 public:
+    typedef Eigen::Transform<double, 3, Eigen::Affine> EigenTransform;
     explicit ConversionParameters(const std::string& _rootLinkName,
-        const std::string& _material):
+        const std::string& _material, const EigenTransform& _addVisualTransform):
         rootLinkName(_rootLinkName),
-        material(_material){}
+        material(_material),
+        addVisualTransform(_addVisualTransform){}
     ConversionParameters(const ConversionParameters& o):
         rootLinkName(o.rootLinkName),
-        material(o.material) {}
+        material(o.material),
+        addVisualTransform(o.addVisualTransform) {}
 
     virtual ~ConversionParameters() {}
 
@@ -50,6 +55,15 @@ public:
 
     // material for the meshes
     std::string material;
+
+    /** 
+     * this transform will be post-multiplied on all links' **visuals** (not links!) local
+     * transform (their "origin"). This can be used to correct transformation errors which may have been 
+     * introduced in converting meshes from one format to the other, losing orientation information
+     * (for example, .dae has an "up vector" definition which may have been ignored)
+     */
+    EigenTransform addVisualTransform;
+
 private:
     ConversionParameters(){}
 };

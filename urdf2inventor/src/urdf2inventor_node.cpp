@@ -63,11 +63,27 @@ int main(int argc, char** argv)
     priv.param<double>("scale_factor", scaleFactor, scaleFactor);
     ROS_INFO("scale_factor: <%f>", scaleFactor);
 
+    // An axis and angle (degrees) can be specified which will transform *all*
+    // visuals (not links, but their visuals!) within their local coordinate system.
+    // This can be used to correct transformation errors which may have been 
+    // introduced in converting meshes from one format to the other, losing orientation information
+    // For example, .dae has an "up vector" definition which may have been ignored.
+    float visCorrAxX=0;
+    priv.param<float>("visual_corr_axis_x", visCorrAxX, visCorrAxX);
+    float visCorrAxY=0;
+    priv.param<float>("visual_corr_axis_y", visCorrAxY, visCorrAxY);
+    float visCorrAxZ=0;
+    priv.param<float>("visual_corr_axis_z", visCorrAxZ, visCorrAxZ);
+    float visCorrAxAngle=0;
+    priv.param<float>("visual_corr_axis_angle", visCorrAxAngle, visCorrAxAngle);
+    urdf2inventor::Urdf2Inventor::EigenTransform addTrans(Eigen::AngleAxisd(visCorrAxAngle*M_PI/180, Eigen::Vector3d(visCorrAxX,visCorrAxY,visCorrAxZ)));
+
     urdf2inventor::Urdf2Inventor converter(scaleFactor);
 
     ROS_INFO("Starting model conversion...");
         
-    urdf2inventor::Urdf2Inventor::ConversionParametersPtr params = converter.getBasicConversionParams(rootLinkName, outputMaterial);
+    urdf2inventor::Urdf2Inventor::ConversionParametersPtr params
+        = converter.getBasicConversionParams(rootLinkName, outputMaterial, addTrans);
 
     ROS_INFO("Loading and converting...");
 
@@ -91,7 +107,7 @@ int main(int argc, char** argv)
     std::stringstream wholeFile;
     wholeFile<<outputDir<<"/"<<converter.getRobotName()<<".iv";
     ROS_INFO_STREAM("Now writing whole robot to "<<wholeFile.str());
-    if (!converter.writeAsInventor(wholeFile.str()))
+    if (!converter.writeAsInventor(wholeFile.str(),"",true, addTrans))
     {
         ROS_ERROR("Could not write whole robot file");
         return 0;

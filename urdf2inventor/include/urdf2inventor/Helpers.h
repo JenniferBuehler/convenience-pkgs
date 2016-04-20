@@ -80,9 +80,8 @@ extern std::string packagePathToAbsolute(std::string& packagePath);
 }  //  namespace helpers
 }  //  namespace urdf2inventor
 
-
-
 extern std::ostream& operator<<(std::ostream& o, const Eigen::Vector3d& v);
+
 extern std::ostream& operator<<(std::ostream& o, const Eigen::Vector3f& v);
 
 extern std::ostream& operator<<(std::ostream& o, const Eigen::Quaterniond& v);

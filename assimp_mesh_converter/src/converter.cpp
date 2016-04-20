@@ -3,7 +3,7 @@
 #include <assimp/Exporter.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
-
+#include <assimp/config.h>
 #include <boost/filesystem.hpp>
    
 #include <sstream>
