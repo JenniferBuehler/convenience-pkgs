@@ -2,7 +2,7 @@
 #define CONVENIENCE_ROS_FUNCTIONS_ROBOTINFO
 
 #include <ros/ros.h>
-#include <architecture_binding/Thread.h>
+#include <baselib_binding/Thread.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <sensor_msgs/JointState.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
@@ -60,8 +60,8 @@ class RobotInfo {
         ros::NodeHandle& n, const std::string& virtualJointName, const std::string& frameID); 
 
     private:
-    typedef architecture_binding::mutex mutex;
-    typedef architecture_binding::unique_lock<mutex>::type unique_lock;
+    typedef baselib_binding::mutex mutex;
+    typedef baselib_binding::unique_lock<mutex>::type unique_lock;
 
     bool receivedJointState();
     void jointStateCallback(const sensor_msgs::JointState& jointstate); 

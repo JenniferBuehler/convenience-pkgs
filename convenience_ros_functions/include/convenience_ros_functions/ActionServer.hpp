@@ -72,7 +72,7 @@ float ActionServer<ActionMessage>::waitForExecution(float timeout){
         this->executionFinishedCondition.wait(guard);
     }else{    
         // Unlocks the mutex and waits for a notification.
-        success = this->executionFinishedCondition.timed_wait(guard, architecture_binding::get_duration_secs(timeout));
+        success = this->executionFinishedCondition.timed_wait(guard, baselib_binding::get_duration_secs(timeout));
     }
     if (!success) return -1;
 

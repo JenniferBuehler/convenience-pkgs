@@ -1,0 +1,51 @@
+# This CMake file specifies compiler definitions required
+# and the libraries to bind for either implementations of
+# c++11 and boost.
+# 
+# Defines the following cmake variables:
+#   baselib_binding_DEFINITIONS_BOOST: the compile definitions you need to use for your targets
+#   baselib_binding_DEFINITIONS_STD: the compile definitions you need to use for your targets
+#   baselib_binding_DEFINITIONS: based on the variable baselib_binding_USE_BOOST on the cache, contains
+#                                the definitions for *either* boost *or* std
+#   baselib_binding_LIBRARIES_BOOST: The boost libraries required for the baselib
+#   baselib_binding_LIBRARIES_STD: The stdc++ libraries, if any, required for the baselib
+#   baselib_binding_LIBRARIES: based on the variable baselib_binding_USE_BOOST on the cache, contains
+#                              the libraries for *either* boost *or* std (could be empty)
+
+set(baselib_binding_DEFINITIONS_BOOST -DUSE_BOOST)
+set(baselib_binding_DEFINITIONS_STD -DUSE_C11 -std=c++11)
+
+# When using catkin, the include dirs are determined by catkin itself
+if (NOT CATKIN_DEVEL_PREFIX)
+    get_filename_component(SELF_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+    # message("$$$$$$$ ${CMAKE_CURRENT_LIST_FILE} SELF_DIR = ${SELF_DIR}")
+    get_filename_component(baselib_binding_INCLUDE_DIRS "${SELF_DIR}/../../include/" ABSOLUTE)
+    ## This should be added in case this package provides andy
+    ## targets (libraries or executables) at some point.
+    # include(${SELF_DIR}/baselib_binding-targets.cmake)
+endif (NOT CATKIN_DEVEL_PREFIX)
+
+
+## Decides whether the baselib_binding implementation
+## for Boost OR for std c++11 is to be used.
+set(baselib_binding_USE_BOOST true CACHE BOOL 
+    "Use Boost threads/shared pointers, or if false, std c++11 instead")
+
+## Some packages may need to know the variable for BOTH
+## Boost and c++11, eg. to generating separate libraries
+## using different implementations. So the variables should still
+## be provided for both baselib choices, which involves
+## a find_package(Boost). If this is not found, the user would 
+## have to manually set baselib_binding_USE_BOOST to false.
+find_package(Boost COMPONENTS system thread)
+set(baselib_binding_LIBRARIES_BOOST ${Boost_LIBRARIES})
+
+# message(STATUS "Found boost libraries: ${Boost_FOUND}")
+
+# Set the convenience variables based on the choice of boost/std
+if (baselib_binding_USE_BOOST)
+    set(baselib_binding_DEFINITIONS ${baselib_binding_DEFINITIONS} ${baselib_binding_DEFINITIONS_BOOST})
+    set(baselib_binding_LIBRARIES ${baselib_binding_LIBRARIES} ${baselib_binding_LIBRARIES_BOOST})
+else (baselib_binding_USE_BOOST)
+    set(baselib_binding_DEFINITIONS ${baselib_binding_DEFINITIONS} ${baselib_binding_DEFINITIONS_STD})
+endif (baselib_binding_USE_BOOST)

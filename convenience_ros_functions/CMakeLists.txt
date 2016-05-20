@@ -14,10 +14,8 @@ find_package(catkin REQUIRED COMPONENTS
   trajectory_msgs
   eigen_conversions
   convenience_math_functions
-  architecture_binding
+  baselib_binding
 )
-
-include(cmake/architecture_binding.cmake.in)
 
 ###################################
 ## catkin specific configuration ##
@@ -32,9 +30,8 @@ catkin_package(
   INCLUDE_DIRS include
   LIBRARIES convenience_ros_functions
   CATKIN_DEPENDS actionlib geometry_msgs rosbag roscpp sensor_msgs
-        tf trajectory_msgs eigen_conversions convenience_math_functions architecture_binding
+        tf trajectory_msgs eigen_conversions convenience_math_functions baselib_binding
 #  DEPENDS system_lib
-   CFG_EXTRAS architecture_binding.cmake.in
 )
 
 ###########
@@ -58,6 +55,20 @@ add_library(convenience_ros_functions
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
 add_dependencies(convenience_ros_functions ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+if (NOT (CMAKE_VERSION VERSION_LESS 2.8.12))
+    message(STATUS "Using target_compile_options with cmake version ${CMAKE_VERSION}")
+    target_compile_options(convenience_ros_functions PRIVATE ${baselib_binding_DEFINITIONS}) 
+else (NOT (CMAKE_VERSION VERSION_LESS 2.8.12))
+    message(STATUS "Using set_target_properties with cmake version ${CMAKE_VERSION}")
+    # not recommended, but works with catkin:
+    set_target_properties(convenience_ros_functions PROPERTIES COMPILE_FLAGS ${baselib_binding_DEFINITIONS})
+    # This would be better, but when compiling with catkin (and on bloom prerelease), has error 
+    # "<command-line>:0:1: error: macro names must be identifiers":
+    # target_compile_definitions(architecture_log_boost PUBLIC -DBOOST)
+    # can look into this at some point, but for now this will work.
+endif (NOT (CMAKE_VERSION VERSION_LESS 2.8.12))
+
 
 ## Declare a C++ executable
 # add_executable(convenience_ros_functions_node src/convenience_ros_functions_node.cpp)

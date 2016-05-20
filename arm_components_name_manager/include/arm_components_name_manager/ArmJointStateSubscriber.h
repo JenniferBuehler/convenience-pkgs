@@ -29,7 +29,7 @@
 #include <ros/ros.h>
 #include <sensor_msgs/JointState.h>
 #include <arm_components_name_manager/ArmComponentsNameManager.h>
-#include <architecture_binding/Thread.h>
+#include <baselib_binding/Thread.h>
 
 // #include <convenience_ros_functions/TypedSubscriber.h>
 
@@ -89,7 +89,7 @@ public:
      */
     bool isActive() const;
 private:
-    typedef architecture_binding::unique_lock<architecture_binding::recursive_mutex>::type unique_lock;
+    typedef baselib_binding::unique_lock<baselib_binding::recursive_mutex>::type unique_lock;
     // typedef convenience_ros_functions::TypedSubscriber<sensor_msgs::JointState> JointStateSubscriber;
 
     void callback(const sensor_msgs::JointState& msg);
@@ -98,7 +98,7 @@ private:
     ros::Time getLastUpdateTime() const;
 
     // protects all fields which need protecting
-    mutable architecture_binding::recursive_mutex mutex;
+    mutable baselib_binding::recursive_mutex mutex;
     bool valid_arm, valid_grippers;
 
     const ArmComponentsNameManager jointsManager;

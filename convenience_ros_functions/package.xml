@@ -47,7 +47,7 @@
   <build_depend>trajectory_msgs</build_depend>
   <build_depend>eigen_conversions</build_depend>
   <build_depend>convenience_math_functions</build_depend>
-  <build_depend>architecture_binding</build_depend>
+  <build_depend>baselib_binding</build_depend>
   <run_depend>actionlib</run_depend>
   <run_depend>geometry_msgs</run_depend>
   <run_depend>rosbag</run_depend>
@@ -57,7 +57,7 @@
   <run_depend>trajectory_msgs</run_depend>
   <run_depend>eigen_conversions</run_depend>
   <run_depend>convenience_math_functions</run_depend>
-  <run_depend>architecture_binding</run_depend>
+  <run_depend>baselib_binding</run_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

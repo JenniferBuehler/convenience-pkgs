@@ -23,9 +23,9 @@
 #include <string>
 #include <iostream>
 #include <sstream>
-#include <architecture_binding/SharedPtr.h>
+#include <baselib_binding/SharedPtr.h>
 
-namespace architecture_binding
+namespace logger_binding
 {
 
 /**
@@ -36,7 +36,7 @@ namespace architecture_binding
 class Log
 {
 public:
-    typedef architecture_binding::shared_ptr<Log>::type LogPtr;
+    typedef baselib_binding::shared_ptr<Log>::type LogPtr;
 
     static void print(const std::stringstream& str)
     {
@@ -197,7 +197,7 @@ protected:
     }
 };
 
-}  // namespace architecture_binding
+}  // namespace logger_binding
 
 extern std::string getFilenameFromPath(const std::string& path);
 
@@ -207,11 +207,11 @@ extern std::string getFileDirectory(const std::string& pathToFile);
 // initialize the print log singleton to use std::out and std::err
 #define PRINT_INIT_STD() \
 {\
-    if (architecture_binding::Log::Singleton) \
+    if (logger_binding::Log::Singleton) \
     {\
         std::cerr << "Singleton already set, overwriting!" << std::endl;\
     }\
-    architecture_binding::Log::Singleton = SHARED_PTR<architecture_binding::Log>(new architecture_binding::StdLog()); \
+    logger_binding::Log::Singleton = SHARED_PTR<logger_binding::Log>(new logger_binding::StdLog()); \
 }
 
 
@@ -219,28 +219,28 @@ extern std::string getFileDirectory(const std::string& pathToFile);
 {\
     std::stringstream _str_; \
     _str_ << msg << " - "<< getFilenameFromPath(__FILE__) << ", " << __LINE__; \
-    architecture_binding::Log::printLn(_str_); \
+    logger_binding::Log::printLn(_str_); \
 }
 
 #define PRINTDEBUG(msg) \
 {\
     std::stringstream _str_; \
     _str_ << msg << " - "<< getFilenameFromPath(__FILE__) << ", " << __LINE__; \
-    architecture_binding::Log::printLn(_str_); \
+    logger_binding::Log::printLn(_str_); \
 }
 
 #define PRINTERROR(msg) \
 {\
     std::stringstream _str_; \
     _str_ << msg << " - "<< getFilenameFromPath(__FILE__) << ", " << __LINE__; \
-    architecture_binding::Log::printErrorLn(_str_); \
+    logger_binding::Log::printErrorLn(_str_); \
 }
 
 #define PRINTWARN(msg) \
 {\
     std::stringstream _str_; \
     _str_ << msg << " - "<< getFilenameFromPath(__FILE__) << ", " << __LINE__; \
-    architecture_binding::Log::printWarnLn(_str_); \
+    logger_binding::Log::printWarnLn(_str_); \
 }
 
 

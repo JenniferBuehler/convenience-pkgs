@@ -2,7 +2,7 @@
 #define CONVENIENCE_ROS_FUNCTIONS_TYPEDSUBSCRIBER_H
 
 #include <ros/ros.h>
-#include <architecture_binding/Thread.h>
+#include <baselib_binding/Thread.h>
 
 #include <map>
 
@@ -75,11 +75,11 @@ public:
     bool waitForNextMessage(MessageType& msg, float timeout = -1, float wait_step=0.05) const;
 
 private:
-    typedef architecture_binding::recursive_mutex recursive_mutex;
-    typedef architecture_binding::mutex mutex;
-    typedef architecture_binding::unique_lock<mutex>::type unique_lock;
-    typedef architecture_binding::unique_lock<recursive_mutex>::type unique_recursive_lock;
-    typedef architecture_binding::condition_variable condition_variable;
+    typedef baselib_binding::recursive_mutex recursive_mutex;
+    typedef baselib_binding::mutex mutex;
+    typedef baselib_binding::unique_lock<mutex>::type unique_lock;
+    typedef baselib_binding::unique_lock<recursive_mutex>::type unique_recursive_lock;
+    typedef baselib_binding::condition_variable condition_variable;
 
     ros::Time getLastUpdateTime() const;
 

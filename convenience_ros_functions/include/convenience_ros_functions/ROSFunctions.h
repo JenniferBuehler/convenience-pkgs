@@ -1,8 +1,8 @@
 #ifndef CONVENIENCE_ROS_FUNCTIONS_ROSFUNCTIONS_H
 #define CONVENIENCE_ROS_FUNCTIONS_ROSFUNCTIONS_H
 
-#include <architecture_binding/SharedPtr.h>
-#include <architecture_binding/Thread.h>
+#include <baselib_binding/SharedPtr.h>
+#include <baselib_binding/Thread.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <tf/transform_listener.h>
 #include <actionlib/client/simple_client_goal_state.h>
@@ -33,7 +33,7 @@ namespace convenience_ros_functions
 class ROSFunctions
 {
 public:
-    typedef architecture_binding::shared_ptr<ROSFunctions>::type ROSFunctionsPtr;
+    typedef baselib_binding::shared_ptr<ROSFunctions>::type ROSFunctionsPtr;
     /**
      * \param tf_max_cache_time maximum cache time for tf listener
      */
@@ -249,7 +249,7 @@ private:
     static int hasVal(const std::string& val, const std::vector<std::string>& vec);
 
     //static lock for general method access
-    static architecture_binding::recursive_mutex slock;
+    static baselib_binding::recursive_mutex slock;
     static ROSFunctionsPtr _singleton;
 
     //tf_listener is thread-safe so doesn't require a mutex.

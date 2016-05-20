@@ -18,13 +18,13 @@
    Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
-#include <architecture_binding/LogBinding.h>
-#include <architecture_binding/SharedPtr.h>
+#include <logger_binding/LogBinding.h>
+#include <baselib_binding/SharedPtr.h>
 #include <string>
 
-architecture_binding::Log::LogPtr architecture_binding::Log::Singleton((architecture_binding::Log*) NULL);
+logger_binding::Log::LogPtr logger_binding::Log::Singleton((logger_binding::Log*) NULL);
 
-bool architecture_binding::Log::initSglWarningPrinted = false;
+bool logger_binding::Log::initSglWarningPrinted = false;
 
 
 std::string getFilenameFromPath(const std::string& path)

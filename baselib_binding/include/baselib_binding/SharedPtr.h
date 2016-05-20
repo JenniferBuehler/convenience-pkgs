@@ -1,5 +1,5 @@
-#ifndef GRASP_PLANNING_GRASPIT_SHAREDPTR_H
-#define GRASP_PLANNING_GRASPIT_SHAREDPTR_H
+#ifndef BASELIB_BINDING_SHAREDPTR_H
+#define BASELIB_BINDING_SHAREDPTR_H
 
 /**
    Macros for switching between shared pointer implementations.
@@ -20,6 +20,9 @@
    along with this program; if not, write to the Free Software Foundation,
    Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
+#if defined(USE_BOOST) and defined (USE_C11)
+    "ERROR: Inconsistent use of boost and C++11 at the same time"
+#endif
 
 #ifdef USE_BOOST
 
@@ -33,7 +36,7 @@
 
 
 
-namespace architecture_binding
+namespace baselib_binding
 {
 
 #ifdef USE_BOOST
@@ -43,14 +46,14 @@ class shared_ptr: public boost::shared_ptr<T>
 { };*/
 
 // make typedefs of this as follows:
-// typedef architecture_binding::shared_ptr<CLASS>::type CLASSPtr;
+// typedef baselib_binding::shared_ptr<CLASS>::type CLASSPtr;
 template <class T>
 struct shared_ptr
 {
     typedef boost::shared_ptr<T> type;
 };
 
-#define architecture_binding_ns boost
+#define baselib_binding_ns boost
 
 #else  // use C++11 std
 
@@ -59,17 +62,18 @@ class shared_ptr: public std::shared_ptr<T>
 { };*/
 
 // make typedefs of this as follows:
-// typedef architecture_binding::shared_ptr<CLASS>::type CLASSPtr;
+// typedef baselib_binding::shared_ptr<CLASS>::type CLASSPtr;
 template <class T>
 struct shared_ptr
 {
     typedef std::shared_ptr<T> type;
 };
 
-#define architecture_binding_ns std
+
+#define baselib_binding_ns std
 
 #endif
 
 }  //namespace
 
-#endif  // GRASP_PLANNING_GRASPIT_SHAREDPTR_H
+#endif  // BASELIB_BINDING_SHAREDPTR_H

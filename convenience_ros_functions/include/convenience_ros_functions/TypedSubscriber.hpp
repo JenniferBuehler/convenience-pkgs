@@ -71,7 +71,7 @@ bool TypedSubscriber<Msg>::waitForNextMessage(Msg& msg, float timeout, float wai
         {
             unique_lock lock(messageArrivedMutex);
             // Unlocks the mutex and waits for a notification.
-            msgArrived=this->messageArrivedCondition.timed_wait(lock, architecture_binding::get_duration_secs(wait_step));
+            msgArrived=this->messageArrivedCondition.timed_wait(lock, baselib_binding::get_duration_secs(wait_step));
         }
         if (!msgArrived)
         {   // it is still possible that a message arrived in-between the timed_wait calls, but we never

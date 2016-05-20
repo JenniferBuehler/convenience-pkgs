@@ -20,11 +20,11 @@
    Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
-#include <architecture_binding/LogBinding.h>
+#include <logger_binding/LogBinding.h>
 #include <ros/ros.h>
 #include <string>
 
-namespace architecture_binding
+namespace logger_binding
 {
 
 /**
@@ -67,16 +67,16 @@ protected:
     }
 };
 
-}  // namespace architecture_binding
+}  // namespace logger_binding
 
 
 #define PRINT_INIT_ROS() \
 {\
-    if (architecture_binding::Log::Singleton) \
+    if (logger_binding::Log::Singleton) \
     { \
         std::cerr << "Singleton already set, overwriting!" << std::endl;\
     } \
-    architecture_binding::Log::Singleton = architecture_binding::Log::LogPtr(new architecture_binding::ROSLog()); \
+    logger_binding::Log::Singleton = logger_binding::Log::LogPtr(new logger_binding::ROSLog()); \
 }
 
 #endif  // ARCHITECTURE_BINDING_ROS_LOGBINDINGROS_H

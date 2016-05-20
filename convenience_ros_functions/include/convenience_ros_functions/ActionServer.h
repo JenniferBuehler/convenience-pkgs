@@ -1,8 +1,8 @@
 #ifndef CONVENIENCE_ROS_FUNCTIONS_ACTIONSERVER_H
 #define CONVENIENCE_ROS_FUNCTIONS_ACTIONSERVER_H
 
-#include <architecture_binding/Thread.h>
-#include <architecture_binding/SharedPtr.h>
+#include <baselib_binding/Thread.h>
+#include <baselib_binding/SharedPtr.h>
 #include <actionlib/server/action_server.h>
 #include <convenience_ros_functions/ROSFunctions.h>
 
@@ -28,7 +28,7 @@ protected:
     typedef ActionServer<ActionMessage> Self;
 
     typedef actionlib::ActionServer<ActionMessage> ROSActionServerT;
-    // typedef typename architecture_binding::shared_ptr<ROSActionServerT> ROSActionServerPtr;
+    // typedef typename baselib_binding::shared_ptr<ROSActionServerT> ROSActionServerPtr;
     typedef ROSActionServerT * ROSActionServerPtr;
     typedef typename ROSActionServerT::GoalHandle ActionGoalHandleT;
 
@@ -161,11 +161,11 @@ private:
 
     bool hasCurrentGoal();
 
-    typedef architecture_binding::recursive_mutex recursive_mutex;
-    typedef architecture_binding::mutex mutex;
-    typedef architecture_binding::unique_lock<mutex>::type unique_lock;
-    typedef architecture_binding::unique_lock<recursive_mutex>::type unique_recursive_lock;
-    typedef architecture_binding::condition_variable condition_variable;
+    typedef baselib_binding::recursive_mutex recursive_mutex;
+    typedef baselib_binding::mutex mutex;
+    typedef baselib_binding::unique_lock<mutex>::type unique_lock;
+    typedef baselib_binding::unique_lock<recursive_mutex>::type unique_recursive_lock;
+    typedef baselib_binding::condition_variable condition_variable;
 
 
     ros::NodeHandle node;

@@ -2,7 +2,7 @@
 #define CONVENIENCE_ROS_FUNCTIONS_TYPEDSUBSCRIBER_H
 
 #include <ros/ros.h>
-#include <architecture_binding/Thread.h>
+#include <baselib_binding/Thread.h>
 
 namespace convenience_ros_functions {
 
@@ -31,8 +31,8 @@ class TypedPublisher {
 
     private:
     
-    typedef architecture_binding::mutex mutex;
-    typedef architecture_binding::unique_lock<mutex>::type unique_lock;
+    typedef baselib_binding::mutex mutex;
+    typedef baselib_binding::unique_lock<mutex>::type unique_lock;
 
     mutex mutex;
     

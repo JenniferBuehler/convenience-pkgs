@@ -1,5 +1,5 @@
-#ifndef ARCHITECTURE_BINDING_THREAD_H
-#define ARCHITECTURE_BINDING_THREAD_H
+#ifndef BASELIBITECTURE_BINDING_THREAD_H
+#define BASELIBITECTURE_BINDING_THREAD_H
 
 /**
    Macros for switching between thread implementations boost and std c++11.
@@ -20,6 +20,9 @@
    along with this program; if not, write to the Free Software Foundation,
    Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
+#if defined(USE_BOOST) and defined (USE_C11)
+    "ERROR: Inconsistent use of boost and C++11 at the same time"
+#endif
 
 
 #ifdef USE_BOOST
@@ -31,12 +34,13 @@
 #include <thread>
 #include <mutex>
 #include <chrono>
+#include <condition_variable>
 
 #endif
 
 
 
-namespace architecture_binding
+namespace baselib_binding
 {
 
 #ifdef USE_BOOST
@@ -53,7 +57,7 @@ static duration get_duration_secs(double secs)
 }
 
 // make typedefs of this as follows:
-// typedef architecture_binding::unique_lock<CLASS>::type CLASSPtr;
+// typedef baselib_binding::unique_lock<CLASS>::type CLASSPtr;
 template <class T>
 struct unique_lock
 {
@@ -72,20 +76,21 @@ typedef std::thread thread;
 typedef std::mutex mutex;
 typedef std::recursive_mutex recursive_mutex;
 typedef std::condition_variable condition_variable;
-typedef std::chrono::duration;
+typedef std::chrono::duration<double, std::ratio<1> > duration;
 
 static duration get_duration_secs(double secs)
 {
-    return std::chrono::seconds(secs);
+    return duration(secs);
 }
 
 // make typedefs of this as follows:
-// typedef architecture_binding::unique_lock<CLASS>::type CLASSPtr;
+// typedef baselib_binding::unique_lock<CLASS>::type CLASSPtr;
 template <class T>
 struct unique_lock
 {
     typedef std::unique_lock<T> type;
 };
+
 
 #define SLEEP(secs) \
 { \
@@ -95,4 +100,4 @@ struct unique_lock
 #endif
 
 }  // namespace
-#endif  // ARCHITECTURE_BINDING_THREAD_H
+#endif  // BASELIBITECTURE_BINDING_THREAD_H

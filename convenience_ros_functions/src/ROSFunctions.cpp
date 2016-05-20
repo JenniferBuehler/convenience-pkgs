@@ -11,7 +11,7 @@
 using convenience_ros_functions::ROSFunctions;
 
 ROSFunctions::ROSFunctionsPtr ROSFunctions::_singleton;
-architecture_binding::recursive_mutex ROSFunctions::slock;
+baselib_binding::recursive_mutex ROSFunctions::slock;
 
 ROSFunctions::ROSFunctions(float tf_max_cache_time):
     tf_listener(ros::Duration(tf_max_cache_time))
