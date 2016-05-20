@@ -75,13 +75,12 @@ set (LOGGER_CONFIG_CMAKE logger_bindingConfig.cmake)
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 if (catkin_FOUND)
-    if (COMPILE_BOOST)
+    if (baselib_binding_USE_BOOST)
         set(CATKIN_DEPEND_LIBS ${baselib_binding_LIBRARIES})
         set(CATKIN_GEN_LIBS logger_binding_boost)
-    endif (COMPILE_BOOST)
-    if (COMPILE_C++11)
-        set(CATKIN_GEN_LIBS ${CATKIN_GEN_LIBS} logger_binding_c++11)
-    endif (COMPILE_C++11)
+    else (baselib_binding_USE_BOOST)
+        set(CATKIN_GEN_LIBS logger_binding_c++11)
+    endif (baselib_binding_USE_BOOST)
     catkin_package(
         INCLUDE_DIRS include
         LIBRARIES ${CATKIN_GEN_LIBS} 
