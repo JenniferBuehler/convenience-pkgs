@@ -20,7 +20,7 @@ if (NOT CATKIN_DEVEL_PREFIX)
     get_filename_component(SELF_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
     # message("$$$$$$$ ${CMAKE_CURRENT_LIST_FILE} SELF_DIR = ${SELF_DIR}")
     get_filename_component(baselib_binding_INCLUDE_DIRS "${SELF_DIR}/../../include/" ABSOLUTE)
-    ## This should be added in case this package provides andy
+    ## This should be added in case this package provides any
     ## targets (libraries or executables) at some point.
     # include(${SELF_DIR}/baselib_binding-targets.cmake)
 endif (NOT CATKIN_DEVEL_PREFIX)

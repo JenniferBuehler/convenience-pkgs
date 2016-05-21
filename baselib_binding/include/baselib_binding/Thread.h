@@ -24,6 +24,11 @@
     "ERROR: Inconsistent use of boost and C++11 at the same time"
 #endif
 
+#if !defined(USE_BOOST) and !defined (USE_C11)
+    "ERROR: You need to have defined either USE_BOOST or USE_C11, have you included the definitions for this package in your build file (eg cmake)?"
+#endif
+
+
 
 #ifdef USE_BOOST
 
