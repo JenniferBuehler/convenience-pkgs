@@ -9,7 +9,6 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   convenience_math_functions
   baselib_binding 
-  # convenience_ros_functions
 )
 
 ################################################
@@ -44,7 +43,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
     INCLUDE_DIRS include
     LIBRARIES arm_components_name_manager
-    CATKIN_DEPENDS roscpp sensor_msgs convenience_math_functions baselib_binding #convenience_ros_functions 
+    CATKIN_DEPENDS roscpp sensor_msgs convenience_math_functions baselib_binding 
 #   DEPENDS system_lib
 )
 

@@ -32,6 +32,7 @@ catkin_package(
   CATKIN_DEPENDS actionlib geometry_msgs rosbag roscpp sensor_msgs
         tf trajectory_msgs eigen_conversions convenience_math_functions baselib_binding
 #  DEPENDS system_lib
+  CFG_EXTRAS export_definitions.cmake
 )
 
 ###########
