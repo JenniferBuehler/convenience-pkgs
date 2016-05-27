@@ -1,3 +1,2 @@
-# This file can be used as catkin CFG_EXTRAS to 
-# add the baselib binding to depending packages.
-add_definitions(${baselib_binding_DEFINITIONS})
+# This file can be used as catkin CFG_EXTRAS to export baselib_binding compiler definitions 
+set(convenience_ros_functions_DEFINITIONS ${baselib_binding_DEFINITIONS})
