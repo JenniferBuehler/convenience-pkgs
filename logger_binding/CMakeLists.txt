@@ -13,7 +13,6 @@
 cmake_minimum_required(VERSION 2.8.11)
 project(logger_binding)
 
-
 # By default, compiling with catkin is
 # enabled. It will only be disabled again
 # if CATKIN_DEVEL_PREFIX is not set.
@@ -51,6 +50,9 @@ if (NOT ENFORCE_CATKIN AND NOT CATKIN_DEVEL_PREFIX)
     set (COMPILE_WITH_CATKIN false)
 endif (NOT ENFORCE_CATKIN AND NOT CATKIN_DEVEL_PREFIX)
 
+# find baselib_binding: if boost is enabled with baselib_binding_USE_BOOST
+# (default is true), this will also find Boost and add the cmake variables
+# to baselib_binding variables.
 if (COMPILE_WITH_CATKIN)
     find_package(catkin REQUIRED COMPONENTS
         roscpp
@@ -59,9 +61,6 @@ if (COMPILE_WITH_CATKIN)
 else (COMPILE_WITH_CATKIN)
     find_package(baselib_binding REQUIRED)
 endif (COMPILE_WITH_CATKIN)
-
-# message("$$$$$$$$$$$$$$$ Found baselib: libs=${baselib_binding_LIBRARIES}, defs=${baselib_binding_DEFINITIONS}")
-# message("$$$$$$$$$$$$$$$ dirs=${baselib_binding_INCLUDE_DIRS}")
 
 # This CMake file can be used to find this package
 set (LOGGER_CONFIG_CMAKE logger_bindingConfig.cmake)
@@ -75,21 +74,21 @@ set (LOGGER_CONFIG_CMAKE logger_bindingConfig.cmake)
 ## LIBRARIES: libraries you create in this project that dependent projects also need
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
-if (catkin_FOUND)
+if (COMPILE_WITH_CATKIN)
     if (baselib_binding_USE_BOOST)
-        set(CATKIN_DEPEND_LIBS ${baselib_binding_LIBRARIES})
         set(CATKIN_GEN_LIBS logger_binding_boost)
     else (baselib_binding_USE_BOOST)
         set(CATKIN_GEN_LIBS logger_binding_c++11)
     endif (baselib_binding_USE_BOOST)
+    
     catkin_package(
-        INCLUDE_DIRS include
+        INCLUDE_DIRS include ${baselib_binding_INCLUDE_DIRS}
         LIBRARIES ${CATKIN_GEN_LIBS} 
-        CATKIN_DEPENDS roscpp
-        DEPENDS ${CATKIN_DEPEND_LIBS}
+        CATKIN_DEPENDS roscpp  
+        DEPENDS ${baselib_binding_CATKIN_DEPENDS}
         CFG_EXTRAS ${LOGGER_CONFIG_CMAKE}
     )
-endif (catkin_FOUND)
+endif (COMPILE_WITH_CATKIN)
 
 ###########
 ## Build ##
@@ -135,14 +134,14 @@ else (NOT (CMAKE_VERSION VERSION_LESS 2.8.12))
 endif (NOT (CMAKE_VERSION VERSION_LESS 2.8.12))
 
 ## Add cmake target dependencies of the library
-if (catkin_FOUND)
+if (COMPILE_WITH_CATKIN)
     if (COMPILE_BOOST)
         add_dependencies(logger_binding_boost ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
     endif (COMPILE_BOOST)
     if (COMPILE_C++11)
         add_dependencies(logger_binding_c++11 ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
     endif (COMPILE_C++11)
-endif (catkin_FOUND)
+endif (COMPILE_WITH_CATKIN)
 
 ## Declare a C++ executable
 # add_executable(logger_binding_node src/logger_binding_node.cpp)
@@ -152,9 +151,9 @@ endif (catkin_FOUND)
 # add_dependencies(logger_binding_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-if (catkin_FOUND)
+if (COMPILE_WITH_CATKIN)
     set (LINK_LIBS ${catkin_LIBRARIES})
-endif (catkin_FOUND)
+endif (COMPILE_WITH_CATKIN)
   
 if (COMPILE_BOOST)
     target_link_libraries(logger_binding_boost
@@ -175,19 +174,19 @@ endif (COMPILE_C++11)
 ## Install ##
 #############
 
-if (catkin_FOUND) 
+if (COMPILE_WITH_CATKIN) 
     # all install targets should use catkin DESTINATION variables
     # See http://ros.org/doc/api/catkin/html/adv_user_guide/variables.html
     set ( INCLUDE_DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
     set ( LIB_DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})
     set ( BIN_DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
     set ( SHARE_DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
-else (catkin_FOUND) 
+else (COMPILE_WITH_CATKIN) 
     set ( INCLUDE_DESTINATION ${CMAKE_INSTALL_PREFIX}/include/${PROJECT_NAME}/)
     set ( LIB_DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/)
     set ( BIN_DESTINATION ${CMAKE_INSTALL_PREFIX}/bin/)
     set ( SHARE_DESTINATION ${CMAKE_INSTALL_PREFIX}/share/)
-endif (catkin_FOUND) 
+endif (COMPILE_WITH_CATKIN) 
 
 if (COMPILE_BOOST)
     set(INSTALL_LIBS logger_binding_boost)

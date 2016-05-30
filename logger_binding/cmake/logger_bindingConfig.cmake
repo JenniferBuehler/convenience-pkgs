@@ -18,9 +18,8 @@ set(logger_binding_DEFINITIONS_STD baselib_binding_DEFINITIONS_STD)
 get_filename_component(SELF_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
 
 ## This should be added in case this package provides andy
-## targets (libraries or executables) at some point.
+## targets (libraries or executables).
 include(${SELF_DIR}/logger_binding-targets.cmake)
 
 get_filename_component(logger_binding_INCLUDE "${SELF_DIR}/../../include/" ABSOLUTE)
 set(logger_binding_INCLUDE_DIRS ${logger_binding_INCLUDE} ${baselib_binding_INCLUDE_DIRS})
-

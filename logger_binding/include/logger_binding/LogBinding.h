@@ -1,5 +1,5 @@
-#ifndef ARCHITECTURE_BINDING_LOGBINDING_H
-#define ARCHITECTURE_BINDING_LOGBINDING_H
+#ifndef LOGGER_BINDING_LOGBINDING_H
+#define LOGGER_BINDING_LOGBINDING_H
 /**
    Logging class to abstract from the type of logging to be used.
 
@@ -244,4 +244,4 @@ extern std::string getFileDirectory(const std::string& pathToFile);
 }
 
 
-#endif  // ARCHITECTURE_BINDING_LOGBINDING_H
+#endif  // LOGGER_BINDING_LOGBINDING_H

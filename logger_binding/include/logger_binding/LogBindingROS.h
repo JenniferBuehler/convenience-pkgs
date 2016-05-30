@@ -1,5 +1,5 @@
-#ifndef ARCHITECTURE_BINDING_ROS_LOGBINDINGROS_H
-#define ARCHITECTURE_BINDING_ROS_LOGBINDINGROS_H
+#ifndef LOGGER_BINDING_ROS_LOGBINDINGROS_H
+#define LOGGER_BINDING_ROS_LOGBINDINGROS_H
 /**
    Logging class implementation for ROS
 
@@ -79,4 +79,4 @@ protected:
     logger_binding::Log::Singleton = logger_binding::Log::LogPtr(new logger_binding::ROSLog()); \
 }
 
-#endif  // ARCHITECTURE_BINDING_ROS_LOGBINDINGROS_H
+#endif  // LOGGER_BINDING_ROS_LOGBINDINGROS_H

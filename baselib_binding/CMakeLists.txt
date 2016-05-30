@@ -31,8 +31,8 @@ if (NOT ENFORCE_CATKIN AND NOT CATKIN_DEVEL_PREFIX)
 endif (NOT ENFORCE_CATKIN AND NOT CATKIN_DEVEL_PREFIX)
 
 if (COMPILE_WITH_CATKIN)
-    find_package(catkin REQUIRED COMPONENTS
-        roscpp
+    find_package(catkin REQUIRED
+        #COMPONENTS roscpp
     )
 endif (COMPILE_WITH_CATKIN)
 
@@ -55,7 +55,7 @@ if (COMPILE_WITH_CATKIN)
     catkin_package(
         INCLUDE_DIRS include
         # LIBRARIES  
-        CATKIN_DEPENDS roscpp
+        # CATKIN_DEPENDS roscpp
         CFG_EXTRAS ${BASELIB_CONFIG_CMAKE}
     )
 endif (COMPILE_WITH_CATKIN)
@@ -82,19 +82,19 @@ endif (COMPILE_WITH_CATKIN)
 ## Install ##
 #############
 
-if (catkin_FOUND) 
+if (COMPILE_WITH_CATKIN) 
     # all install targets should use catkin DESTINATION variables
     # See http://ros.org/doc/api/catkin/html/adv_user_guide/variables.html
     set ( INCLUDE_DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
     set ( LIB_DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})
     set ( BIN_DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
     set ( SHARE_DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
-else (catkin_FOUND) 
+else (COMPILE_WITH_CATKIN) 
     set ( INCLUDE_DESTINATION ${CMAKE_INSTALL_PREFIX}/include/${PROJECT_NAME}/)
     set ( LIB_DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/)
     set ( BIN_DESTINATION ${CMAKE_INSTALL_PREFIX}/bin/)
     set ( SHARE_DESTINATION ${CMAKE_INSTALL_PREFIX}/share/)
-endif (catkin_FOUND) 
+endif (COMPILE_WITH_CATKIN) 
 
 ## This should be added in case this package provides andy
 ## targets (libraries or executables) at some point,

@@ -2,8 +2,6 @@ cmake_minimum_required(VERSION 2.8.3)
 project(convenience_ros_functions)
 
 ## Find catkin macros and libraries
-## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
-## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   actionlib
   geometry_msgs
@@ -31,7 +29,7 @@ catkin_package(
   LIBRARIES convenience_ros_functions
   CATKIN_DEPENDS actionlib geometry_msgs rosbag roscpp sensor_msgs
         tf trajectory_msgs eigen_conversions convenience_math_functions baselib_binding
-#  DEPENDS system_lib
+  DEPENDS ${baselib_binding_CATKIN_DEPENDS} 
   CFG_EXTRAS export_definitions.cmake
 )
 
@@ -70,14 +68,6 @@ else (NOT (CMAKE_VERSION VERSION_LESS 2.8.12))
     # can look into this at some point, but for now this will work.
 endif (NOT (CMAKE_VERSION VERSION_LESS 2.8.12))
 
-
-## Declare a C++ executable
-# add_executable(convenience_ros_functions_node src/convenience_ros_functions_node.cpp)
-
-## Add cmake target dependencies of the executable
-## same as for the library above
-# add_dependencies(convenience_ros_functions_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
 ## Specify libraries to link a library or executable target against
 target_link_libraries(convenience_ros_functions
   ${catkin_LIBRARIES}
@@ -90,13 +80,6 @@ target_link_libraries(convenience_ros_functions
 # all install targets should use catkin DESTINATION variables
 # See http://ros.org/doc/api/catkin/html/adv_user_guide/variables.html
 
-## Mark executable scripts (Python etc.) for installation
-## in contrast to setup.py, you can choose the destination
-# install(PROGRAMS
-#   scripts/my_python_script
-#   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
-
 ## Mark executables and/or libraries for installation
 install(TARGETS convenience_ros_functions
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
@@ -108,15 +91,7 @@ install(TARGETS convenience_ros_functions
 install(DIRECTORY include/${PROJECT_NAME}
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
   FILES_MATCHING PATTERN "*.h *.hpp"
-  PATTERN ".git" EXCLUDE
 )
-
-## Mark other files for installation (e.g. launch and bag files, etc.)
-# install(FILES
-#   # myfile1
-#   # myfile2
-#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-# )
 
 #############
 ## Testing ##
