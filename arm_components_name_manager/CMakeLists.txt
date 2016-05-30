@@ -82,13 +82,6 @@ endif (NOT (CMAKE_VERSION VERSION_LESS 2.8.12))
 ## either from message generation or dynamic reconfigure
 add_dependencies(arm_components_name_manager ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-## Declare a C++ executable
-# add_executable(arm_components_name_manager_node src/arm_components_name_manager_node.cpp)
-
-## Add cmake target dependencies of the executable
-## same as for the library above
-# add_dependencies(arm_components_name_manager_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
 ## Specify libraries to link a library or executable target against
 target_link_libraries(arm_components_name_manager
   ${catkin_LIBRARIES}
@@ -101,13 +94,6 @@ target_link_libraries(arm_components_name_manager
 # all install targets should use catkin DESTINATION variables
 # See http://ros.org/doc/api/catkin/html/adv_user_guide/variables.html
 
-## Mark executable scripts (Python etc.) for installation
-## in contrast to setup.py, you can choose the destination
-# install(PROGRAMS
-#   scripts/my_python_script
-#   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
-
 ## Mark executables and/or libraries for installation
 install(TARGETS arm_components_name_manager
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
@@ -116,18 +102,10 @@ install(TARGETS arm_components_name_manager
 )
 
 ## Mark cpp header files for installation
-install(DIRECTORY include/
+install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
   FILES_MATCHING PATTERN "*.h"
-  PATTERN ".git" EXCLUDE
 )
-
-## Mark other files for installation (e.g. launch and bag files, etc.)
-# install(FILES
-#   # myfile1
-#   # myfile2
-#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-# )
 
 #############
 ## Testing ##
