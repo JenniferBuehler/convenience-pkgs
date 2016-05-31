@@ -40,7 +40,7 @@ endif (COMPILE_WITH_CATKIN)
 # to use along with compiler directives required.
 # It can be included
 # by all other projects which depend on this library.
-set (BASELIB_CONFIG_CMAKE baselib_bindingConfig.cmake)
+set (BASELIB_CONFIG_CMAKE baselib_bindingConfigExtras.cmake)
 
 if (COMPILE_WITH_CATKIN)
     ###################################
@@ -110,9 +110,15 @@ install(FILES
     DESTINATION ${INCLUDE_DESTINATION}
 )
 
+# For cmake-only build: Need to rename the cmake config
+# file as it acts also as a find_package() script,
+# and it needs to go in the lib destination.
+# Cannot keep original name because that conflicts with
+# catkin/jenkins
 install(FILES
     cmake/${BASELIB_CONFIG_CMAKE}
-    DESTINATION ${LIB_DESTINATION}/${PROJECT_NAME}
+    DESTINATION ${LIB_DESTINATION}/${PROJECT_NAME}/
+    RENAME baselib_bindingConfig.cmake
 )
 
 #############

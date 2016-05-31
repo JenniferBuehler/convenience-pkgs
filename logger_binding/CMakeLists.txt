@@ -63,7 +63,7 @@ else (COMPILE_WITH_CATKIN)
 endif (COMPILE_WITH_CATKIN)
 
 # This CMake file can be used to find this package
-set (LOGGER_CONFIG_CMAKE logger_bindingConfig.cmake)
+set (LOGGER_CONFIG_CMAKE logger_bindingConfigExtras.cmake)
 
 ###################################
 ## catkin specific configuration ##
@@ -118,6 +118,7 @@ if (COMPILE_C++11)
     )
 endif (COMPILE_C++11)
 
+message(STATUS "logger_binding: using compiler definitions: Boost=${baselib_binding_DEFINITIONS_BOOST}, c++11=${baselib_binding_DEFINITIONS_STD}")
 if (NOT (CMAKE_VERSION VERSION_LESS 2.8.12))
     message(STATUS "Using target_compile_options with cmake version ${CMAKE_VERSION}")
     target_compile_options(logger_binding_boost PRIVATE ${baselib_binding_DEFINITIONS_BOOST}) 
@@ -214,11 +215,16 @@ install(FILES
     DESTINATION ${INCLUDE_DESTINATION}
 )
 
+# For cmake-only build: Need to rename the cmake config
+# file as it acts also as a find_package() script,
+# and it needs to go in the lib destination
+# Cannot keep original name because that conflicts with
+# catkin/jenkins
 install(FILES
     cmake/${LOGGER_CONFIG_CMAKE}
-    DESTINATION ${LIB_DESTINATION}/${PROJECT_NAME}
+    DESTINATION ${LIB_DESTINATION}/${PROJECT_NAME}/
+    RENAME logger_bindingConfig.cmake
 )
-
 
 #############
 ## Testing ##

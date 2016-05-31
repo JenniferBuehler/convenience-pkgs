@@ -14,6 +14,8 @@
 #                              the libraries for *either* boost *or* std (could be empty)
 #   baselib_binding_CATKIN_DEPENDS: libraries to put as DEPENDS into catkin_package(), if catkin is used.
 
+message(STATUS "Finding baselib_binding with baselib_bindingConfig.cmake")
+
 set(baselib_binding_DEFINITIONS_BOOST -DUSE_BOOST)
 set(baselib_binding_DEFINITIONS_STD -DUSE_C11 -std=c++11)
 
@@ -48,9 +50,11 @@ endif (NOT Boost_FOUND)
 
 # Set the convenience variables based on the choice of boost/std
 if (baselib_binding_USE_BOOST)
+    message(STATUS "baselib_binding: using Boost threads/shared pointers")
     set(baselib_binding_CATKIN_DEPENDS boost)
     set(baselib_binding_DEFINITIONS ${baselib_binding_DEFINITIONS} ${baselib_binding_DEFINITIONS_BOOST})
     set(baselib_binding_LIBRARIES ${baselib_binding_LIBRARIES} ${baselib_binding_LIBRARIES_BOOST})
 else (baselib_binding_USE_BOOST)
+    message(STATUS "baselib_binding: using c++11 threads/shared pointers")
     set(baselib_binding_DEFINITIONS ${baselib_binding_DEFINITIONS} ${baselib_binding_DEFINITIONS_STD})
 endif (baselib_binding_USE_BOOST)
