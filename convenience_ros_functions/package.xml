@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>convenience_ros_functions</name>
-  <version>0.0.1</version>
+  <version>0.0.2</version>
   <description>Provides a variety of convenience functions for certain ROS messages</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag --> 

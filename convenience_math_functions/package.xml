@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>convenience_math_functions</name>
-  <version>0.0.1</version>
+  <version>0.0.2</version>
   <description>Provides a few convenience math functions
       using the Eigen libraries.</description>
 
