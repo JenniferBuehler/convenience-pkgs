@@ -2,6 +2,11 @@
 Changelog for package baselib_binding
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Adjusted cmake files for build on jenkins: CFG_EXTRAS cannot have same name as <packagename>Config.cmake
+* Contributors: Jennifer Buehler
+
 0.0.1 (2016-05-30)
 ------------------
 * Released initial version on ROS. 
