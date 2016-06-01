@@ -115,16 +115,20 @@ install(FILES
     DESTINATION ${INCLUDE_DESTINATION}
 )
 
-# For cmake-only build: Need to rename the cmake config
-# file as it acts also as a find_package() script,
-# and it needs to go in the lib destination.
-# Cannot keep original name because that conflicts with
-# catkin/jenkins
-install(FILES
-    cmake/${BASELIB_CONFIG_CMAKE}
-    DESTINATION ${LIB_DESTINATION}/${PROJECT_NAME}/
-    RENAME baselib_bindingConfig.cmake
-)
+
+if (NOT COMPILE_WITH_CATKIN) 
+    # For cmake-only build: Install the config file.
+    # Need to rename the cmake config
+    # file as it acts also as a find_package() script,
+    # and it needs to go in the lib destination.
+    # Cannot keep original name because that conflicts with
+    # catkin/jenkins.
+    install(FILES
+        cmake/${BASELIB_CONFIG_CMAKE}
+        DESTINATION ${LIB_DESTINATION}/${PROJECT_NAME}/
+        RENAME baselib_bindingConfig.cmake
+    )
+endif (NOT COMPILE_WITH_CATKIN) 
 
 #############
 ## Testing ##

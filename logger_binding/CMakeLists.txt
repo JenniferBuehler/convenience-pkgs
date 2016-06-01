@@ -129,9 +129,13 @@ if (NOT (CMAKE_VERSION VERSION_LESS 2.8.12))
     target_compile_options(logger_binding_c++11 PRIVATE ${baselib_binding_DEFINITIONS_STD}) 
 else (NOT (CMAKE_VERSION VERSION_LESS 2.8.12))
     message(STATUS "Using set_target_properties with cmake version ${CMAKE_VERSION}")
+    # for set_target_properties, need to build string out of arrays:
+    string (REPLACE ";" " " _baselib_binding_DEFINITIONS_BOOST "${baselib_binding_DEFINITIONS_BOOST}")
+    string (REPLACE ";" " " _baselib_binding_DEFINITIONS_STD "${baselib_binding_DEFINITIONS_STD}")
+    message(STATUS "set_target_properties cmake flags: boost = ${_baselib_binding_DEFINITIONS_BOOST}, c++11 = ${_baselib_binding_DEFINITIONS_STD}")
     # not recommended, but works with catkin:
-    set_target_properties(logger_binding_boost PROPERTIES COMPILE_FLAGS ${baselib_binding_DEFINITIONS_BOOST})
-    set_target_properties(logger_binding_c++11 PROPERTIES COMPILE_FLAGS ${baselib_binding_DEFINITIONS_STD})
+    set_target_properties(logger_binding_boost PROPERTIES COMPILE_FLAGS ${_baselib_binding_DEFINITIONS_BOOST})
+    set_target_properties(logger_binding_c++11 PROPERTIES COMPILE_FLAGS "${_baselib_binding_DEFINITIONS_STD}")
     # This would be better, but when compiling with catkin (and on bloom prerelease), has error 
     # "<command-line>:0:1: error: macro names must be identifiers":
     # target_compile_definitions(architecture_log_boost PUBLIC -DBOOST)
@@ -212,16 +216,19 @@ install(FILES
     DESTINATION ${INCLUDE_DESTINATION}
 )
 
-# For cmake-only build: Need to rename the cmake config
-# file as it acts also as a find_package() script,
-# and it needs to go in the lib destination
-# Cannot keep original name because that conflicts with
-# catkin/jenkins
-install(FILES
-    cmake/${LOGGER_CONFIG_CMAKE}
-    DESTINATION ${LIB_DESTINATION}/${PROJECT_NAME}/
-    RENAME logger_bindingConfig.cmake
-)
+if (NOT COMPILE_WITH_CATKIN) 
+    # For cmake-only build: Install config file.
+    # Need to rename the cmake config
+    # file as it acts also as a find_package() script,
+    # and it needs to go in the lib destination
+    # Cannot keep original name because that conflicts with
+    # catkin/jenkins
+    install(FILES
+        cmake/${LOGGER_CONFIG_CMAKE}
+        DESTINATION ${LIB_DESTINATION}/${PROJECT_NAME}/
+        RENAME logger_bindingConfig.cmake
+    )
+endif (NOT COMPILE_WITH_CATKIN) 
 
 #############
 ## Testing ##
