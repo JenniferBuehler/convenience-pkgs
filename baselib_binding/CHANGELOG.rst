@@ -2,6 +2,11 @@
 Changelog for package baselib_binding
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Temproray change for jenkins build (enforce catkin)
+* Contributors: Jennifer Buehler
+
 0.0.2 (2016-05-31)
 ------------------
 * Adjusted cmake files for build on jenkins: CFG_EXTRAS cannot have same name as <packagename>Config.cmake

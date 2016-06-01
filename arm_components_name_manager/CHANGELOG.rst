@@ -2,6 +2,9 @@
 Changelog for package arm_components_name_manager
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.0.2 (2016-05-31)
 ------------------
 * Small adjustments in cmake files

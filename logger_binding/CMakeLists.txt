@@ -28,6 +28,10 @@ project(logger_binding)
 # to jenkins.
 set (ENFORCE_CATKIN true)
 
+if (ENFORCE_CATKIN)
+    message(STATUS "Enforcing compilation with catkin")
+endif (ENFORCE_CATKIN)
+
 # to disable compilation of the boost library,
 # set this to false
 if (NOT DEFINED COMPILE_BOOST)
@@ -46,7 +50,7 @@ endif (NOT DEFINED COMPILE_C++11)
 set (COMPILE_WITH_CATKIN true)
 
 if (NOT ENFORCE_CATKIN AND NOT CATKIN_DEVEL_PREFIX)
-    message(STATUS "Compiling grasp_planning_graspit: CATKIN_DEVEL_PREFIX is not defined, so **enforcing compilation with cmake**.")
+    message(STATUS "Compiling logger_binding: CATKIN_DEVEL_PREFIX is not defined, so **enforcing compilation with cmake**.")
     set (COMPILE_WITH_CATKIN false)
 endif (NOT ENFORCE_CATKIN AND NOT CATKIN_DEVEL_PREFIX)
 
@@ -118,7 +122,7 @@ if (COMPILE_C++11)
     )
 endif (COMPILE_C++11)
 
-message(STATUS "logger_binding: using compiler definitions: Boost=${baselib_binding_DEFINITIONS_BOOST}, c++11=${baselib_binding_DEFINITIONS_STD}")
+message(STATUS "Logger_binding: using compiler definitions: Boost=${baselib_binding_DEFINITIONS_BOOST}, c++11=${baselib_binding_DEFINITIONS_STD}")
 if (NOT (CMAKE_VERSION VERSION_LESS 2.8.12))
     message(STATUS "Using target_compile_options with cmake version ${CMAKE_VERSION}")
     target_compile_options(logger_binding_boost PRIVATE ${baselib_binding_DEFINITIONS_BOOST}) 
@@ -143,13 +147,6 @@ if (COMPILE_WITH_CATKIN)
         add_dependencies(logger_binding_c++11 ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
     endif (COMPILE_C++11)
 endif (COMPILE_WITH_CATKIN)
-
-## Declare a C++ executable
-# add_executable(logger_binding_node src/logger_binding_node.cpp)
-
-## Add cmake target dependencies of the executable
-## same as for the library above
-# add_dependencies(logger_binding_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 if (COMPILE_WITH_CATKIN)

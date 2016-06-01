@@ -2,6 +2,9 @@
 Changelog for package convenience_math_functions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.0.2 (2016-05-31)
 ------------------
 

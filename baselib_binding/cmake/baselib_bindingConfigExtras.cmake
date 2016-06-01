@@ -14,7 +14,7 @@
 #                              the libraries for *either* boost *or* std (could be empty)
 #   baselib_binding_CATKIN_DEPENDS: libraries to put as DEPENDS into catkin_package(), if catkin is used.
 
-message(STATUS "Finding baselib_binding with baselib_bindingConfig.cmake")
+message(STATUS "Finding baselib_binding with baselib_bindingConfig.cmake (extras)")
 
 set(baselib_binding_DEFINITIONS_BOOST -DUSE_BOOST)
 set(baselib_binding_DEFINITIONS_STD -DUSE_C11 -std=c++11)
