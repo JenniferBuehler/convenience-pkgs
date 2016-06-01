@@ -18,7 +18,7 @@ project(baselib_binding)
 # it seems that CATKIN_DEVEL_PREFIX is not set.
 # So set ENFORCE_CATKIN to true only for the commits
 # to jenkins.
-set (ENFORCE_CATKIN false)
+set (ENFORCE_CATKIN true)
    
 # Private flag: compiling with catkin is prioritized by default.
 # This flag will be set to false if CATKIN_DEVEL_PREFIX

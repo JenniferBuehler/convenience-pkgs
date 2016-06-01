@@ -26,7 +26,7 @@ project(logger_binding)
 # it seems that CATKIN_DEVEL_PREFIX is not set.
 # So set ENFORCE_CATKIN to true only for the commits
 # to jenkins.
-set (ENFORCE_CATKIN false)
+set (ENFORCE_CATKIN true)
 
 # to disable compilation of the boost library,
 # set this to false
