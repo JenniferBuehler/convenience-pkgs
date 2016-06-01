@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>baselib_binding</name>
-  <version>0.0.2</version>
+  <version>0.0.3</version>
   <description>
     Includes headers to provide loose coupling to
     core functionalities such as threads and shared pointers:

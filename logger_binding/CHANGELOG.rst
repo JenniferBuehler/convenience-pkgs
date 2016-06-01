@@ -2,8 +2,8 @@
 Changelog for package logger_binding
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.3 (2016-06-01)
+------------------
 * Temproray change for jenkins build (enforce catkin)
 * Contributors: Jennifer Buehler
 

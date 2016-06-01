@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>arm_components_name_manager</name>
-  <version>0.0.2</version>
+  <version>0.0.3</version>
   <description>Can be used to configure robot arm component
       names and access them conveniently from within the source code</description>
 

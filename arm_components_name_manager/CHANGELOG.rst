@@ -2,8 +2,8 @@
 Changelog for package arm_components_name_manager
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.3 (2016-06-01)
+------------------
 * Contributors: Jennifer Buehler
 
 0.0.2 (2016-05-31)
