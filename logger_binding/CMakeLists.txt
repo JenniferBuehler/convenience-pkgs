@@ -135,7 +135,7 @@ else (NOT (CMAKE_VERSION VERSION_LESS 2.8.12))
     message(STATUS "set_target_properties cmake flags: boost = ${_baselib_binding_DEFINITIONS_BOOST}, c++11 = ${_baselib_binding_DEFINITIONS_STD}")
     # not recommended, but works with catkin:
     set_target_properties(logger_binding_boost PROPERTIES COMPILE_FLAGS ${_baselib_binding_DEFINITIONS_BOOST})
-    set_target_properties(logger_binding_c++11 PROPERTIES COMPILE_FLAGS "${_baselib_binding_DEFINITIONS_STD}")
+    set_target_properties(logger_binding_c++11 PROPERTIES COMPILE_FLAGS ${_baselib_binding_DEFINITIONS_STD})
     # This would be better, but when compiling with catkin (and on bloom prerelease), has error 
     # "<command-line>:0:1: error: macro names must be identifiers":
     # target_compile_definitions(architecture_log_boost PUBLIC -DBOOST)
