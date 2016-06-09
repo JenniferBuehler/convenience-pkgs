@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>logger_binding</name>
-  <version>0.0.4</version>
+  <version>1.0.0</version>
   <description>
     Includes libraries and headers to provide loose coupling to
     logging. Provides loggers that use std streams, or ROS logging

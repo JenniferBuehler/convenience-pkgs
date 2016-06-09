@@ -2,8 +2,8 @@
 Changelog for package arm_components_name_manager
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.0.0 (2016-06-09)
+------------------
 * Added option to specify max velocities and efforts
 * Contributors: Jennifer Buehler
 
