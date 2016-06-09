@@ -2,6 +2,9 @@
 Changelog for package convenience_math_functions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.0.3 (2016-06-01)
 ------------------
 * Contributors: Jennifer Buehler
