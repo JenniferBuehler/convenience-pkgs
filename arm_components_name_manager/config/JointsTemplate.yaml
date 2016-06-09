@@ -37,13 +37,6 @@
         - <arm_joint_2_name>
         - ...
 
-    # initial ("Home") pose of the arm joints. Has to be the same
-    # order as arm_joints.
-    arm_joint_init:
-        - <arm_joint_1_initial_pose_in_rad>
-        - <arm_joint_2_initial_pose_in_rad>
-        - ...
-
     # All links which are in-between (and directly before and after)
     # the arm_joints. It does however *not* include the palm_link
     # because this is specified separately.
@@ -51,20 +44,32 @@
         - <arm_link_1_name>
         - <arm_link_2_name>
         - ... 
-            
+
+    # initial ("Home") pose of the arm joints. Has to be the same
+    # order as arm_joints.
+    arm_joint_init:
+        - <arm_joint_1_initial_pose_in_rad>
+        - <arm_joint_2_initial_pose_in_rad>
+        - ...
+
+    # Maximum velocities for arm
+    arm_joint_max_vel:
+        - <arm_joint_1_max_vel>
+        - <arm_joint_2_max_vel>
+        - ...
+    # Maximum forces for arm
+    arm_joint_max_force:
+        - <arm_joint_1_max_force>
+        - <arm_joint_2_max_force>
+        - ...
+
+
     # All joints of the "gripper". The gripper is the part of the
     # arm used to grasp/grip objects. 
     # Essentially, they are the "finger joints".
     gripper_joints:
         - <gripper_joint_1_name>
         - <gripper_joint_2_name>
-        - ...
-
-    # initial ("Home") pose of the gripper joints. Has to be the same
-    # order as gripper_joints.
-    gripper_joint_init:
-        - <gripper_joint_1_initial_pose_in_rad>
-        - <gripper_joint_2_initial_pose_in_rad>
         - ...
 
     # All links which are in-between (and directly before and after)
@@ -74,6 +79,27 @@
         - <gripper_link_1_name>
         - <gripper_link_2_name>
         - ...
+
+    # Maximum velocities for gripper
+    gripper_joint_max_vel:
+        - <gripper_joint_1_max_vel>
+        - <gripper_joint_2_max_vel>
+        - ...
+
+    # Maximum forces for gripper
+    gripper_joint_max_force:
+        - <gripper_joint_1_max_force>
+        - <gripper_joint_2_max_force>
+        - ...
+
+    # initial ("Home") pose of the gripper joints. Has to be the same
+    # order as gripper_joints.
+    gripper_joint_init:
+        - <gripper_joint_1_initial_pose_in_rad>
+        - <gripper_joint_2_initial_pose_in_rad>
+        - ...
+
+
 
     # [OPTIONAL] Position controller names. Does not need to be specified
     # if ArmComponentsNameManager instance is not used to read PID values

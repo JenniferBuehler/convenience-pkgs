@@ -5,17 +5,15 @@
 cmake_minimum_required(VERSION 2.8.11)
 project(baselib_binding)
 
+
 # By default, compiling with catkin is
 # enabled. It will only be disabled again
 # if CATKIN_DEVEL_PREFIX is not set.
 # To enforce compiling *with* catkin
 # even if CATKIN_DEVEL_PREFIX is not defined,
 # compile with the flag -DENFORCE_CATKIN=true
-
-# To enforce compiling with catkin in ANY case,
-# set ENFORCE_CATKIN to true. This is for example
-# required when compiling with jenkins, when
-# it seems that CATKIN_DEVEL_PREFIX is not set.
+# This is for example required when compiling on jenkins,
+# when it seems that CATKIN_DEVEL_PREFIX is not set.
 # So set ENFORCE_CATKIN to true only for the commits
 # to jenkins.
 set (ENFORCE_CATKIN true)

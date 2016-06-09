@@ -73,7 +73,9 @@ bool ArmComponentsNameManager::loadDefaults()
     return true;
 }
 
-int ArmComponentsNameManager::loadParameters(bool printErrors)
+
+
+int ArmComponentsNameManager::loadParameters(bool printErrors, bool verbose)
 {
     bool allControllersSpecified = true;
     int noSpec = 0;
@@ -82,7 +84,6 @@ int ArmComponentsNameManager::loadParameters(bool printErrors)
     ros::NodeHandle robot_nh(robot_namespace);
     ROS_INFO_STREAM("ArmComponentsNameManager reading parameters from namespace: " << robot_nh.getNamespace());
 
-    // ROS_INFO_STREAM("Reading palm_link:");
     robot_nh.getParam("palm_link", palm_link);
     if (palm_link.empty())
     {
@@ -90,18 +91,19 @@ int ArmComponentsNameManager::loadParameters(bool printErrors)
         if (printErrors) ROS_ERROR("Parameter palm_link should be specified");
     }
     ++numSpecs;
+    if (verbose) ROS_INFO_STREAM("Palm link: "<<palm_link);
 
-    // ROS_INFO_STREAM("Reading effector_link:");
     robot_nh.getParam("effector_link", effector_link);
     if (effector_link.empty())
     {
         ROS_INFO("INFO: effector_link not specified, defaulting to same as palm_link");
         effector_link = palm_link;
     }
+    if (verbose) ROS_INFO_STREAM("Effector link: "<<effector_link);
 
     // --- arm parameters
 
-    // ROS_INFO_STREAM("Reading arm_joints:");
+    if (verbose) ROS_INFO_STREAM("Reading arm_joints:");
     robot_nh.getParam("arm_joints", arm_joints);
     if (arm_joints.empty())
     {
@@ -109,9 +111,9 @@ int ArmComponentsNameManager::loadParameters(bool printErrors)
         if (printErrors) ROS_ERROR("Parameter arm_joints should be specified as an array");
     }
     ++numSpecs;
-    // for (int i=0; i < arm_joints.size(); ++i) { ROS_INFO_STREAM("idx " << i << ": " << arm_joints[i]);}
+    if (verbose) for (int i=0; i < arm_joints.size(); ++i) { ROS_INFO_STREAM("idx " << i << ": " << arm_joints[i]);}
 
-    // ROS_INFO_STREAM("Reading arm_joint_init:");
+    if (verbose) ROS_INFO_STREAM("Reading arm_joint_init:");
     robot_nh.getParam("arm_joint_init", arm_joint_init);
     if (arm_joint_init.empty())
     {
@@ -119,10 +121,29 @@ int ArmComponentsNameManager::loadParameters(bool printErrors)
         if (printErrors) ROS_ERROR("Parameter arm_joint_init should be specified as an array");
     }
     ++numSpecs;
-    // for (int i=0; i < arm_joint_init.size(); ++i) { ROS_INFO_STREAM("idx " << i << ": " << arm_joint_init[i]);}
+    if (verbose) for (int i=0; i < arm_joint_init.size(); ++i) { ROS_INFO_STREAM("idx " << i << ": " << arm_joint_init[i]);}
 
+    if (verbose) ROS_INFO_STREAM("Reading arm_joint_max_vel:");
+    robot_nh.getParam("arm_joint_max_vel", arm_joint_max_vel);
+    if (arm_joint_max_vel.empty())
+    {
+        ++noSpec;
+        if (printErrors) ROS_ERROR("Parameter arm_joint_max_vel should be specified as an array");
+    }
+    ++numSpecs;
+    if (verbose) for (int i=0; i < arm_joint_max_vel.size(); ++i) { ROS_INFO_STREAM("idx " << i << ": " << arm_joint_max_vel[i]);}
 
-    // ROS_INFO_STREAM("Reading arm_links:");
+    if (verbose) ROS_INFO_STREAM("Reading arm_joint_max_force:");
+    robot_nh.getParam("arm_joint_max_force", arm_joint_max_force);
+    if (arm_joint_max_force.empty())
+    {
+        ++noSpec;
+        if (printErrors) ROS_ERROR("Parameter arm_joint_max_force should be specified as an array");
+    }
+    ++numSpecs;
+    if (verbose) for (int i=0; i < arm_joint_max_force.size(); ++i) { ROS_INFO_STREAM("idx " << i << ": " << arm_joint_max_force[i]);}
+
+    if (verbose) ROS_INFO_STREAM("Reading arm_links:");
     robot_nh.getParam("arm_links", arm_links);
     if (arm_links.empty())
     {
@@ -130,42 +151,40 @@ int ArmComponentsNameManager::loadParameters(bool printErrors)
         if (printErrors) ROS_ERROR("Parameter arm_links should be specified as an array");
     }
     ++numSpecs;
-    // for (int i=0; i < arm_links.size(); ++i) { ROS_INFO_STREAM("idx " << i << ": " << arm_links[i]);}
+    if (verbose) for (int i=0; i < arm_links.size(); ++i) { ROS_INFO_STREAM("idx " << i << ": " << arm_links[i]);}
 
     // controllers
 
-    // ROS_INFO_STREAM("Reading arm_position_controller_names:");
+    if (verbose) ROS_INFO_STREAM("Reading arm_position_controller_names:");
     robot_nh.getParam("arm_position_controller_names", arm_position_controller_names);
     if (arm_position_controller_names.empty())
     {
         allControllersSpecified = false;
         ROS_INFO("INFO: Parameter arm_position_controller_names has not been specified");
     }
-    // for (int i=0; i < arm_position_controller_names.size(); ++i) { ROS_INFO_STREAM("idx " << i << ": " << arm_position_controller_names[i]);}
+    if (verbose) for (int i=0; i < arm_position_controller_names.size(); ++i) { ROS_INFO_STREAM("idx " << i << ": " << arm_position_controller_names[i]);}
 
-    // ROS_INFO_STREAM("Reading arm_velocity_controller_names:");
+    if (verbose) ROS_INFO_STREAM("Reading arm_velocity_controller_names:");
     robot_nh.getParam("arm_velocity_controller_names", arm_velocity_controller_names);
     if (arm_velocity_controller_names.empty())
     {
         allControllersSpecified = false;
         ROS_INFO("INFO: Parameter arm_velocity_controller_names has not been specified");
     }
-    // for (int i=0; i < arm_velocity_controller_names.size(); ++i) { ROS_INFO_STREAM("idx " << i << ": " << arm_velocity_controller_names[i]);}
+    if (verbose) for (int i=0; i < arm_velocity_controller_names.size(); ++i) { ROS_INFO_STREAM("idx " << i << ": " << arm_velocity_controller_names[i]);}
 
-    // ROS_INFO_STREAM("Reading arm_effort_controller_names:");
+    if (verbose) ROS_INFO_STREAM("Reading arm_effort_controller_names:");
     robot_nh.getParam("arm_effort_controller_names", arm_effort_controller_names);
     if (arm_effort_controller_names.empty())
     {
         allControllersSpecified = false;
         ROS_INFO("INFO: Parameter arm_effort_controller_names has not been specified");
     }
-    // for (int i=0; i < arm_effort_controller_names.size(); ++i) { ROS_INFO_STREAM("idx " << i << ": " << arm_effort_controller_names[i]);}
-
-
+    if (verbose) for (int i=0; i < arm_effort_controller_names.size(); ++i) { ROS_INFO_STREAM("idx " << i << ": " << arm_effort_controller_names[i]);}
 
     // --- gripper parameters
 
-    // ROS_INFO_STREAM("Reading gripper_joints:");
+    if (verbose) ROS_INFO_STREAM("Reading gripper_joints:");
     robot_nh.getParam("gripper_joints", gripper_joints);
     if (gripper_joints.empty())
     {
@@ -173,9 +192,9 @@ int ArmComponentsNameManager::loadParameters(bool printErrors)
         if (printErrors) ROS_ERROR("Parameter gripper_joints should be specified as an array");
     }
     ++numSpecs;
-    // for (int i=0; i < gripper_joints.size(); ++i) { ROS_INFO_STREAM("idx " << i << ": " << gripper_joints[i]);}
+    if (verbose) for (int i=0; i < gripper_joints.size(); ++i) { ROS_INFO_STREAM("idx " << i << ": " << gripper_joints[i]);}
 
-    // ROS_INFO_STREAM("Reading gripper_joint_init:");
+    if (verbose) ROS_INFO_STREAM("Reading gripper_joint_init:");
     robot_nh.getParam("gripper_joint_init", gripper_joint_init);
     if (gripper_joint_init.empty())
     {
@@ -183,10 +202,29 @@ int ArmComponentsNameManager::loadParameters(bool printErrors)
         if (printErrors) ROS_ERROR("Parameter gripper_joint_init should be specified as an array");
     }
     ++numSpecs;
-    // for (int i=0; i < gripper_joint_init.size(); ++i) { ROS_INFO_STREAM("idx " << i << ": " << gripper_joint_init[i]);}
+    if (verbose) for (int i=0; i < gripper_joint_init.size(); ++i) { ROS_INFO_STREAM("idx " << i << ": " << gripper_joint_init[i]);}
 
+    if (verbose) ROS_INFO_STREAM("Reading gripper_joint_max_vel:");
+    robot_nh.getParam("gripper_joint_max_vel", gripper_joint_max_vel);
+    if (gripper_joint_max_vel.empty())
+    {
+        ++noSpec;
+        if (printErrors) ROS_ERROR("Parameter gripper_joint_max_vel should be specified as an array");
+    }
+    ++numSpecs;
+    if (verbose) for (int i=0; i < gripper_joint_max_vel.size(); ++i) { ROS_INFO_STREAM("idx " << i << ": " << gripper_joint_max_vel[i]);}
 
-    // ROS_INFO_STREAM("Reading gripper_links:");
+    if (verbose) ROS_INFO_STREAM("Reading gripper_joint_max_force:");
+    robot_nh.getParam("gripper_joint_max_force", gripper_joint_max_force);
+    if (gripper_joint_max_force.empty())
+    {
+        ++noSpec;
+        if (printErrors) ROS_ERROR("Parameter gripper_joint_max_force should be specified as an array");
+    }
+    ++numSpecs;
+    if (verbose) for (int i=0; i < gripper_joint_max_force.size(); ++i) { ROS_INFO_STREAM("idx " << i << ": " << gripper_joint_max_force[i]);}
+
+    if (verbose) ROS_INFO_STREAM("Reading gripper_links:");
     robot_nh.getParam("gripper_links", gripper_links);
     if (gripper_links.empty())
     {
@@ -194,36 +232,36 @@ int ArmComponentsNameManager::loadParameters(bool printErrors)
         if (printErrors) ROS_ERROR("Parameter gripper_links should be specified as an array");
     }
     ++numSpecs;
-    // for (int i=0; i < gripper_links.size(); ++i) { ROS_INFO_STREAM("idx " << i << ": " << gripper_links[i]);}
+    if (verbose) for (int i=0; i < gripper_links.size(); ++i) { ROS_INFO_STREAM("idx " << i << ": " << gripper_links[i]);}
 
     // controllers
 
-    // ROS_INFO_STREAM("Reading gripper_position_controller_names:");
+    if (verbose) ROS_INFO_STREAM("Reading gripper_position_controller_names:");
     robot_nh.getParam("gripper_position_controller_names", gripper_position_controller_names);
     if (gripper_position_controller_names.empty())
     {
         allControllersSpecified = false;
         ROS_INFO("INFO: Parameter gripper_position_controller_names has not been specified");
     }
-    // for (int i=0; i < gripper_position_controller_names.size(); ++i) { ROS_INFO_STREAM("idx " << i << ": " << gripper_position_controller_names[i]);}
+    if (verbose) for (int i=0; i < gripper_position_controller_names.size(); ++i) { ROS_INFO_STREAM("idx " << i << ": " << gripper_position_controller_names[i]);}
 
-    // ROS_INFO_STREAM("Reading gripper_velocity_controller_names:");
+    if (verbose) ROS_INFO_STREAM("Reading gripper_velocity_controller_names:");
     robot_nh.getParam("gripper_velocity_controller_names", gripper_velocity_controller_names);
     if (gripper_velocity_controller_names.empty())
     {
         allControllersSpecified = false;
         ROS_INFO("INFO: Parameter gripper_velocity_controller_names has not been specified");
     }
-    // for (int i=0; i < gripper_velocity_controller_names.size(); ++i) { ROS_INFO_STREAM("idx " << i << ": " << gripper_velocity_controller_names[i]);}
+    if (verbose) for (int i=0; i < gripper_velocity_controller_names.size(); ++i) { ROS_INFO_STREAM("idx " << i << ": " << gripper_velocity_controller_names[i]);}
 
-    // ROS_INFO_STREAM("Reading gripper_effort_controller_names:");
+    if (verbose) ROS_INFO_STREAM("Reading gripper_effort_controller_names:");
     robot_nh.getParam("gripper_effort_controller_names", gripper_effort_controller_names);
     if (gripper_effort_controller_names.empty())
     {
         allControllersSpecified = false;
         ROS_INFO("INFO: Parameter gripper_effort_controller_names has not been specified");
     }
-    // for (int i=0; i < gripper_effort_controller_names.size(); ++i) { ROS_INFO_STREAM("idx " << i << ": " << gripper_effort_controller_names[i]);}
+    if (verbose) for (int i=0; i < gripper_effort_controller_names.size(); ++i) { ROS_INFO_STREAM("idx " << i << ": " << gripper_effort_controller_names[i]);}
 
     initParamCode = 0;
     if (noSpec == numSpecs) initParamCode =  -1;
@@ -329,6 +367,45 @@ bool ArmComponentsNameManager::GetVelGains(const std::string& jointName, float& 
     }
     return true;
 }
+
+bool ArmComponentsNameManager::GetMaxVals(const std::string& jointName, float& force, float& velocity) const
+{
+    std::vector<std::string>::const_iterator jnt = std::find(arm_joints.begin(), arm_joints.end(), jointName);
+    if (jnt == arm_joints.end())
+    {
+        jnt = std::find(gripper_joints.begin(), gripper_joints.end(), jointName);
+        if (jnt == gripper_joints.end())
+        {
+            ROS_ERROR_STREAM("ArmComponentsNameManager does not maintain joint name '" << jointName << "'");
+            return false;
+        }
+        int idx = jnt - gripper_joints.begin();
+        if ((gripper_joint_max_vel.size() <= idx) || (gripper_joint_max_force.size() <= idx))
+        {
+            ROS_ERROR_STREAM("ArmComponentsNameManager does not have all max values for '" << jointName << "'. Will use 0 instead");
+            velocity = 0;
+            force = 0;
+            return true;
+        }
+        velocity=gripper_joint_max_vel[idx];
+        force=arm_joint_max_force[idx];
+    }
+    else
+    {
+        int idx = jnt - arm_joints.begin();
+        if ((arm_joint_max_vel.size() <= idx) || (arm_joint_max_force.size() <= idx))
+        {
+            ROS_WARN_STREAM("ArmComponentsNameManager does not have all max values for '" << jointName << "'. Will use 0 instead");
+            velocity = 0;
+            force = 0;
+            return true;
+        }
+        velocity=arm_joint_max_vel[idx];
+        force=arm_joint_max_force[idx];
+    }
+    return true;
+}
+
 
 
 void ArmComponentsNameManager::getJointNames(std::vector<std::string>& joint_names, bool withGripper, const std::string& prepend) const

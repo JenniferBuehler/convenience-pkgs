@@ -119,7 +119,7 @@ public:
      * \retval 1 All mandatory parameters found on parameter server and loaded.
      * \retval 2 All mandatory parameters AND controller names found on parameter server and loaded.
      */
-    int loadParameters(bool printErrors=true);
+    int loadParameters(bool printErrors=true, bool verbose=false);
 
     /**
      * wait for maximum \e maxWait seconds and keep re-trying to laod parameters by
@@ -258,7 +258,10 @@ public:
 
     int numArmJoints() const;
     int numGripperJoints() const;
-
+    int numTotalJoints() const
+    {
+        return numArmJoints() + numGripperJoints();
+    }
     /**
      * Check whether this is a gripper joint
      */
@@ -300,6 +303,13 @@ public:
      * Like GetPosGains(), but for velocity controller.
      */
     bool GetVelGains(const std::string& jointName, float& kp, float& ki, float& kd) const;
+
+
+    /**
+     * Returns the max values for this joint.
+     */
+    virtual bool GetMaxVals(const std::string& jointName, float& force, float& velocity) const;
+
 
     /**
      * Sets the names fo all joints, links, and initial poses which otherwise would be
@@ -344,10 +354,14 @@ protected:
     virtual std::string getDefaultEffectorLink() const { return std::string(); }
     virtual std::vector<std::string> getDefaultArmJoints() const { return std::vector<std::string>(); }
     virtual std::vector<std::string> getDefaultArmLinks() const { return std::vector<std::string>(); }
-    virtual std::vector<float> getDefaultArmJointsInitPose() const { return std::vector<float>(); }
-    virtual std::vector<float> getDefaultGripperJointsInitPose() const { return std::vector<float>(); }
     virtual std::vector<std::string> getDefaultGripperJoints() const { return std::vector<std::string>(); }
     virtual std::vector<std::string> getDefaultGripperLinks() const { return std::vector<std::string>(); }
+    virtual std::vector<float> getDefaultArmJointsInitPose() const { return std::vector<float>(); }
+    virtual std::vector<float> getDefaultGripperJointsInitPose() const { return std::vector<float>(); }
+    virtual std::vector<float> getDefaultArmJointsMaxVel() const { return std::vector<float>(); }
+    virtual std::vector<float> getDefaultArmJointsMaxForce() const { return std::vector<float>(); }
+    virtual std::vector<float> getDefaultGripperJointsMaxVel() const { return std::vector<float>(); }
+    virtual std::vector<float> getDefaultGripperJointsMaxForce() const { return std::vector<float>(); }
 
 private:
 
@@ -413,6 +427,23 @@ private:
      * order as gripper_joints.
      */
     std::vector<float> gripper_joint_init;
+   
+    /**
+     * Maximum velocity of the arm joints
+     */ 
+    std::vector<float> arm_joint_max_vel;
+    /**
+     * Maximum force of the arm joints
+     */ 
+    std::vector<float> arm_joint_max_force;
+    /**
+     * Maximum velocity of the gripper joints
+     */ 
+    std::vector<float> gripper_joint_max_vel;
+    /**
+     * Maximum force of the gripper joints
+     */ 
+    std::vector<float> gripper_joint_max_force;
 
     std::vector<std::string> arm_effort_controller_names;
     std::vector<std::string> arm_velocity_controller_names;
