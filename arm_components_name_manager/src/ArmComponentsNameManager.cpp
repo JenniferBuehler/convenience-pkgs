@@ -188,50 +188,50 @@ int ArmComponentsNameManager::loadParameters(bool printErrors, bool verbose)
     robot_nh.getParam("gripper_joints", gripper_joints);
     if (gripper_joints.empty())
     {
-        ++noSpec;
-        if (printErrors) ROS_ERROR("Parameter gripper_joints should be specified as an array");
+        // ++noSpec;
+        ROS_WARN("Parameter gripper_joints has not been specified");
     }
-    ++numSpecs;
+    // ++numSpecs;
     if (verbose) for (int i=0; i < gripper_joints.size(); ++i) { ROS_INFO_STREAM("idx " << i << ": " << gripper_joints[i]);}
 
     if (verbose) ROS_INFO_STREAM("Reading gripper_joint_init:");
     robot_nh.getParam("gripper_joint_init", gripper_joint_init);
     if (gripper_joint_init.empty())
     {
-        ++noSpec;
-        if (printErrors) ROS_ERROR("Parameter gripper_joint_init should be specified as an array");
+        // ++noSpec;
+        ROS_WARN("Parameter gripper_joint_init has not been specified");
     }
-    ++numSpecs;
+    // ++numSpecs;
     if (verbose) for (int i=0; i < gripper_joint_init.size(); ++i) { ROS_INFO_STREAM("idx " << i << ": " << gripper_joint_init[i]);}
 
     if (verbose) ROS_INFO_STREAM("Reading gripper_joint_max_vel:");
     robot_nh.getParam("gripper_joint_max_vel", gripper_joint_max_vel);
     if (gripper_joint_max_vel.empty())
     {
-        ++noSpec;
-        if (printErrors) ROS_ERROR("Parameter gripper_joint_max_vel should be specified as an array");
+        // ++noSpec;
+        ROS_WARN("Parameter gripper_joint_max_vel has not been specified");
     }
-    ++numSpecs;
+    // ++numSpecs;
     if (verbose) for (int i=0; i < gripper_joint_max_vel.size(); ++i) { ROS_INFO_STREAM("idx " << i << ": " << gripper_joint_max_vel[i]);}
 
     if (verbose) ROS_INFO_STREAM("Reading gripper_joint_max_force:");
     robot_nh.getParam("gripper_joint_max_force", gripper_joint_max_force);
     if (gripper_joint_max_force.empty())
     {
-        ++noSpec;
-        if (printErrors) ROS_ERROR("Parameter gripper_joint_max_force should be specified as an array");
+        // ++noSpec;
+        ROS_WARN("Parameter gripper_joint_max_force has not been specified");
     }
-    ++numSpecs;
+    // ++numSpecs;
     if (verbose) for (int i=0; i < gripper_joint_max_force.size(); ++i) { ROS_INFO_STREAM("idx " << i << ": " << gripper_joint_max_force[i]);}
 
     if (verbose) ROS_INFO_STREAM("Reading gripper_links:");
     robot_nh.getParam("gripper_links", gripper_links);
     if (gripper_links.empty())
     {
-        ++noSpec;
-        if (printErrors) ROS_ERROR("Parameter gripper_links should be specified as an array");
+        // ++noSpec;
+        ROS_WARN("Parameter gripper_links has not been specified");
     }
-    ++numSpecs;
+    // ++numSpecs;
     if (verbose) for (int i=0; i < gripper_links.size(); ++i) { ROS_INFO_STREAM("idx " << i << ": " << gripper_links[i]);}
 
     // controllers
