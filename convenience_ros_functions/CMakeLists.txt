@@ -29,7 +29,7 @@ catkin_package(
   LIBRARIES convenience_ros_functions
   CATKIN_DEPENDS actionlib geometry_msgs rosbag roscpp sensor_msgs
         tf trajectory_msgs eigen_conversions convenience_math_functions baselib_binding
-  DEPENDS ${baselib_binding_CATKIN_DEPENDS} 
+  DEPENDS ${baselib_binding_CATKIN_DEPENDS}
   CFG_EXTRAS export_definitions.cmake
 )
 
@@ -57,12 +57,12 @@ add_dependencies(convenience_ros_functions ${${PROJECT_NAME}_EXPORTED_TARGETS} $
 
 if (NOT (CMAKE_VERSION VERSION_LESS 2.8.12))
     message(STATUS "Using target_compile_options with cmake version ${CMAKE_VERSION}")
-    target_compile_options(convenience_ros_functions PRIVATE ${baselib_binding_DEFINITIONS}) 
+    target_compile_options(convenience_ros_functions PRIVATE ${baselib_binding_DEFINITIONS})
 else (NOT (CMAKE_VERSION VERSION_LESS 2.8.12))
     message(STATUS "Using set_target_properties with cmake version ${CMAKE_VERSION}")
     # not recommended, but works with catkin:
     set_target_properties(convenience_ros_functions PROPERTIES COMPILE_FLAGS ${baselib_binding_DEFINITIONS})
-    # This would be better, but when compiling with catkin (and on bloom prerelease), has error 
+    # This would be better, but when compiling with catkin (and on bloom prerelease), has error
     # "<command-line>:0:1: error: macro names must be identifiers":
     # target_compile_definitions(architecture_log_boost PUBLIC -DBOOST)
     # can look into this at some point, but for now this will work.
@@ -92,16 +92,3 @@ install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
   FILES_MATCHING PATTERN "*"
 )
-
-#############
-## Testing ##
-#############
-
-## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_convenience_ros_functions.cpp)
-# if(TARGET ${PROJECT_NAME}-test)
-#   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
-# endif()
-
-## Add folders to be run by python nosetests
-# catkin_add_nosetests(test)

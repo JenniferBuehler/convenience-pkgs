@@ -72,7 +72,7 @@ float ActionServer<ActionMessage>::waitForExecution(float timeout){
         this->executionFinishedCondition.wait(guard);
     }else{    
         // Unlocks the mutex and waits for a notification.
-        success = this->executionFinishedCondition.timed_wait(guard, baselib_binding::get_duration_secs(timeout));
+        success = COND_WAIT(this->executionFinishedCondition, guard, timeout);
     }
     if (!success) return -1;
 
@@ -158,7 +158,12 @@ void ActionServer<ActionMessage>::deleteServer(){
 }
 
 template<typename ActionMessage>
-void ActionServer<ActionMessage>::actionCallback(ActionGoalHandleT& goal){
+#if ROS_VERSION_MINIMUM(1, 12, 0)
+void ActionServer<ActionMessage>::actionCallback(ActionGoalHandleT goal)
+#else
+void ActionServer<ActionMessage>::actionCallback(ActionGoalHandleT& goal)
+#endif
+{
     ROS_INFO_STREAM(this->actionTopic<<": received new goal.");
     if (!this->initialized) {
         ROS_ERROR("Action server not initialised, can't accept goal");
@@ -195,7 +200,12 @@ void ActionServer<ActionMessage>::actionCallback(ActionGoalHandleT& goal){
 }
 
 template<typename ActionMessage>
-void ActionServer<ActionMessage>::actionCancelCallback(ActionGoalHandleT& goal){
+#if ROS_VERSION_MINIMUM(1, 12, 0)
+void ActionServer<ActionMessage>::actionCancelCallback(ActionGoalHandleT goal)
+#else
+void ActionServer<ActionMessage>::actionCancelCallback(ActionGoalHandleT& goal)
+#endif
+{
     this->actionCancelCallbackImpl(goal);
     currentActionDone(actionlib::SimpleClientGoalState::ABORTED);
 }

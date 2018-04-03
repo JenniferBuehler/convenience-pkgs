@@ -1,7 +1,7 @@
 # This CMake file specifies compiler definitions required
 # and the libraries to bind for either implementations of
 # c++11 and boost.
-# 
+#
 # Defines the following cmake variables:
 #   baselib_binding_DEFINITIONS_BOOST: the compile definitions you need to use for your targets
 #   baselib_binding_DEFINITIONS_STD: the compile definitions you need to use for your targets
@@ -31,7 +31,7 @@ endif (NOT CATKIN_DEVEL_PREFIX)
 
 ## Decides whether the baselib_binding implementation
 ## for Boost OR for std c++11 is to be used.
-set(baselib_binding_USE_BOOST true CACHE BOOL 
+set(baselib_binding_USE_BOOST false CACHE BOOL
     "Use Boost threads/shared pointers. If false, std c++11 instead")
 
 ## Some packages may need to know the variable for BOTH

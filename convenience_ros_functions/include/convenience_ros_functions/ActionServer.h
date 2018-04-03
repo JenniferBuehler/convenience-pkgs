@@ -23,7 +23,7 @@ namespace convenience_ros_functions
 template<class ActionMessage>
 class ActionServer
 {
-    ACTION_DEFINITION(ActionMessage) 
+    ACTION_DEFINITION(ActionMessage)
 protected:
     typedef ActionServer<ActionMessage> Self;
 
@@ -46,13 +46,13 @@ protected:
     typedef ActionFeedback ActionFeedbackT;
     typedef ActionFeedbackConstPtr ActionFeedbackConstPtrT;
 public:
- 
+
     ActionServer<ActionMessage>(
-            ros::NodeHandle& _node, 
+            ros::NodeHandle& _node,
             const std::string& action_topic);
     virtual ~ActionServer<ActionMessage>();
-      
- 
+
+
 	/**
 	 * Starts action server and does internal initialisation.
 	 */
@@ -85,7 +85,7 @@ protected:
 
     /**
      * Method to call from subclasses to signal that the currently running goal has finished.
-     * Alternatively, other methods called currentActionDone() can be called which have the 
+     * Alternatively, other methods called currentActionDone() can be called which have the
      * same effect but less descriptive outcomes for the action result.
      */
     void currentActionDone(ResultT& result, const actionlib::SimpleClientGoalState& state);
@@ -95,7 +95,7 @@ protected:
      * which does not take a result.
      */
     void currentActionDone(const actionlib::SimpleClientGoalState& state);
-   
+
     /**
      * Simple implementation of other currentActionDone() methods but which has same
      * effect. When successful, it works the same. On error, the goal is always
@@ -104,19 +104,19 @@ protected:
      * "currentActionDone" is that while it compiles, at runtime there is the problem
      * that it recursively calls itself, instead of calling
      * currentActionDone(const actionlib::SimpleClientGoalState).
-     */ 
+     */
     void currentActionSuccess(const bool success);
 
     /**
      * Can be implemented by subclasses. This is called from init().
      */
     virtual bool initImpl();
-    
+
     /**
      * Can be implemented by subclasses. This is called from shutdown().
      */
     virtual void shutdownImpl() {}
- 
+
     /**
      * Subclasses should implement here whether this goal is eligible.
      * No need to set goal to any state, this will be done if
@@ -139,9 +139,9 @@ protected:
     /**
      * Receive a cancel instruction: subclasses implementation.
      * Only needs to be implemented if any special actions are required
-     * upon canceling the action. 
+     * upon canceling the action.
      */
-    virtual void actionCancelCallbackImpl(ActionGoalHandleT& goal) {}
+    virtual void actionCancelCallbackImpl(const ActionGoalHandleT& goal) {}
 
 private:
 
@@ -149,6 +149,17 @@ private:
 
     void deleteServer();
 
+#if ROS_VERSION_MINIMUM(1, 12, 0)
+    /**
+     * Receive a new goal
+     */
+    void actionCallback(ActionGoalHandleT goal);
+
+    /**
+     * Receive a cancel instruction
+     */
+    void actionCancelCallback(ActionGoalHandleT goal);
+#else
     /**
      * Receive a new goal
      */
@@ -158,6 +169,7 @@ private:
      * Receive a cancel instruction
      */
     void actionCancelCallback(ActionGoalHandleT& goal);
+#endif
 
     bool hasCurrentGoal();
 
@@ -171,7 +183,7 @@ private:
     ros::NodeHandle node;
 
     std::string actionTopic;
-    
+
     bool initialized;
     bool hasGoal;
     bool lastExeSuccess;

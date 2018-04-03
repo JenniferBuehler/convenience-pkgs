@@ -69,8 +69,11 @@ struct unique_lock
     typedef boost::unique_lock<T> type;
 };
 
+// library-specific all to sleep for secs seconds
 #define SLEEP(secs) { boost::this_thread::sleep(boost::posix_time::milliseconds(secs*1000)); }
 
+// library-specific call to condition variable's timed wait. Returns a boolean whether the wait was successful (no timeout)
+#define COND_WAIT(cond_var, lock_guard, timeout) cond_var.timed_wait(lock_guard, baselib_binding::get_duration_secs(timeout))
 
 // ----------------------------------------------
 #else  // use c++11 std
@@ -97,10 +100,14 @@ struct unique_lock
 };
 
 
+// library-specific all to sleep for secs seconds
 #define SLEEP(secs) \
 { \
   std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>(std::floor(secs*1000))));\
 }
+
+// library-specific call to condition variable's timed wait. Returns a boolean whether the wait was successful (no timeout)
+#define COND_WAIT(cond_var, lock_guard, timeout) cond_var.wait_for(lock_guard, baselib_binding::get_duration_secs(timeout)) == std::cv_status::no_timeout
 
 #endif
 

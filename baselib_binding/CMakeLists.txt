@@ -1,5 +1,5 @@
 # This cmake file provides header files to
-# bind a standard interface to either C++11 or boost 
+# bind a standard interface to either C++11 or boost
 # threads and shared pointers.
 
 cmake_minimum_required(VERSION 2.8.11)
@@ -16,8 +16,8 @@ project(baselib_binding)
 # when it seems that CATKIN_DEVEL_PREFIX is not set.
 # So set ENFORCE_CATKIN to true only for the commits
 # to jenkins.
-set (ENFORCE_CATKIN true)
-   
+set (ENFORCE_CATKIN false)
+
 # Private flag: compiling with catkin is prioritized by default.
 # This flag will be set to false if CATKIN_DEVEL_PREFIX
 # is empty/not defined, **and** ENFORCE_CATKIN is false.
@@ -57,55 +57,29 @@ if (COMPILE_WITH_CATKIN)
     ## DEPENDS: system dependencies of this project that dependent projects also need
     catkin_package(
         INCLUDE_DIRS include
-        # LIBRARIES  
+        # LIBRARIES
         # CATKIN_DEPENDS roscpp
         CFG_EXTRAS ${BASELIB_CONFIG_CMAKE}
     )
 endif (COMPILE_WITH_CATKIN)
 
-###########
-## Build ##
-###########
-
-## Specify additional locations of header files
-## Your package locations should be listed before other locations
-#include_directories(
-#  include
-#  ${catkin_INCLUDE_DIRS}
-#)
-
-## Declare a C++ executable
-# add_executable(baselib_binding_node src/baselib_binding_node.cpp)
-
-## Add cmake target dependencies of the executable
-## same as for the library above
-# add_dependencies(baselib_binding_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
 #############
 ## Install ##
 #############
 
-if (COMPILE_WITH_CATKIN) 
+if (COMPILE_WITH_CATKIN)
     # all install targets should use catkin DESTINATION variables
     # See http://ros.org/doc/api/catkin/html/adv_user_guide/variables.html
     set ( INCLUDE_DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
     set ( LIB_DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})
     set ( BIN_DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
     set ( SHARE_DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
-else (COMPILE_WITH_CATKIN) 
+else (COMPILE_WITH_CATKIN)
     set ( INCLUDE_DESTINATION ${CMAKE_INSTALL_PREFIX}/include/${PROJECT_NAME}/)
     set ( LIB_DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/)
     set ( BIN_DESTINATION ${CMAKE_INSTALL_PREFIX}/bin/)
     set ( SHARE_DESTINATION ${CMAKE_INSTALL_PREFIX}/share/)
-endif (COMPILE_WITH_CATKIN) 
-
-## This should be added in case this package provides andy
-## targets (libraries or executables) at some point,
-## in which case also a "install(TARGETS .. EXPORT baselib_binding-targets..)
-## is required.
-#install(EXPORT baselib_binding-targets
-#   DESTINATION ${LIB_DESTINATION}/${PROJECT_NAME}
-#)
+endif (COMPILE_WITH_CATKIN)
 
 install(FILES
     include/${PROJECT_NAME}/Thread.h
@@ -114,7 +88,7 @@ install(FILES
 )
 
 
-if (NOT COMPILE_WITH_CATKIN) 
+if (NOT COMPILE_WITH_CATKIN)
     # For cmake-only build: Install the config file.
     # Need to rename the cmake config
     # file as it acts also as a find_package() script,
@@ -126,17 +100,4 @@ if (NOT COMPILE_WITH_CATKIN)
         DESTINATION ${LIB_DESTINATION}/${PROJECT_NAME}/
         RENAME baselib_bindingConfig.cmake
     )
-endif (NOT COMPILE_WITH_CATKIN) 
-
-#############
-## Testing ##
-#############
-
-## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_baselib_binding.cpp)
-# if(TARGET ${PROJECT_NAME}-test)
-#   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
-# endif()
-
-## Add folders to be run by python nosetests
-# catkin_add_nosetests(test)
+endif (NOT COMPILE_WITH_CATKIN)
